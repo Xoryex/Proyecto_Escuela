@@ -4,7 +4,7 @@ import { escuelaAuthService } from '../services/escuelaAuth.service';
 
 // Configuración de la instancia de Axios para la API
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://primaria.spring.informaticapp.com:4040',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
     headers: {
         'Content-Type': 'application/json',
     },
