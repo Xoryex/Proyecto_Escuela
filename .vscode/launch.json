@@ -8,6 +8,17 @@
             "mainClass": "com.escuelita.www.ProyectoEscuelaPrimariaApplication",
             "projectName": "www",
             "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=57206 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=www"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PasswordGenerator<www>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.escuelita.www.util.PasswordGenerator",
+            "projectName": "www",
+            "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
     ]
