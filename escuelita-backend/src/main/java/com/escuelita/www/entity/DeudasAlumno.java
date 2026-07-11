@@ -1,0 +1,137 @@
+//CORRECTO
+
+package com.escuelita.www.entity;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "deudas_alumno")
+@SQLDelete(sql = "UPDATE deudas_alumno SET estado=0 WHERE id_deuda=?")
+@SQLRestriction("estado = 1")
+@JsonPropertyOrder({
+    "idDeuda", "descripcionCuota", "montoTotal", "fechaEmision",
+    "fechaVencimiento", "estadoDeuda", "fechaPagoTotal", 
+    "idConcepto", "idMatricula", "estado"
+})
+public class DeudasAlumno {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_deuda")
+    private Long idDeuda;
+    
+
+    @Column(name = "descripcion_cuota")
+    private String descripcionCuota;
+    @Column(name = "monto_total")
+    private BigDecimal montoTotal;
+    @Column(name = "fecha_emision")
+    private LocalDate fechaEmision;
+    @Column(name = "fecha_vencimiento")
+    private LocalDate fechaVencimiento;
+    @Column(name = "estado_deuda")
+    private String estadoDeuda = "Pendiente";
+    @Column(name = "fecha_pago_total")
+    private LocalDateTime fechaPagoTotal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_concepto")
+    private ConceptosPago idConcepto;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_matricula")
+    private Matriculas idMatricula;
+
+    private Integer estado = 1;
+
+    //Constructor vacio
+    public DeudasAlumno() {
+    }
+    public DeudasAlumno(Long idDeuda) {
+        this.idDeuda = idDeuda;
+    }
+
+    // Getters y Setters / ToString
+    public Long getIdDeuda() {
+        return idDeuda;
+    }
+    public void setIdDeuda(Long idDeuda) {
+        this.idDeuda = idDeuda;
+    }
+    public String getDescripcionCuota() {
+        return descripcionCuota;
+    }
+    public void setDescripcionCuota(String descripcionCuota) {
+        this.descripcionCuota = descripcionCuota;
+    }
+    public BigDecimal getMontoTotal() {
+        return montoTotal;
+    }
+    public void setMontoTotal(BigDecimal montoTotal) {
+        this.montoTotal = montoTotal;
+    }
+    public LocalDate getFechaEmision() {
+        return fechaEmision;
+    }
+    public void setFechaEmision(LocalDate fechaEmision) {
+        this.fechaEmision = fechaEmision;
+    }
+    public LocalDate getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
+    }
+    public String getEstadoDeuda() {
+        return estadoDeuda;
+    }
+    public void setEstadoDeuda(String estadoDeuda) {
+        this.estadoDeuda = estadoDeuda;
+    }
+    public LocalDateTime getFechaPagoTotal() {
+        return fechaPagoTotal;
+    }
+    public void setFechaPagoTotal(LocalDateTime fechaPagoTotal) {
+        this.fechaPagoTotal = fechaPagoTotal;
+    }
+    public ConceptosPago getIdConcepto() {
+        return idConcepto;
+    }
+    public void setIdConcepto(ConceptosPago idConcepto) {
+        this.idConcepto = idConcepto;
+    }
+    public Matriculas getIdMatricula() {
+        return idMatricula;
+    }
+    public void setIdMatricula(Matriculas idMatricula) {
+        this.idMatricula = idMatricula;
+    }
+    public Integer getEstado() {
+        return estado;
+    }
+    public void setEstado(Integer estado) {
+        this.estado = estado;
+    }
+    @Override
+    public String toString() {
+        return "DeudasAlumno [idDeuda=" + idDeuda + ", descripcionCuota=" + descripcionCuota + ", montoTotal="
+                + montoTotal + ", fechaEmision=" + fechaEmision + ", fechaVencimiento=" + fechaVencimiento
+                + ", estadoDeuda=" + estadoDeuda + ", fechaPagoTotal=" + fechaPagoTotal + ", idConcepto=" + idConcepto
+                + ", idMatricula=" + idMatricula + ", estado=" + estado + "]";
+    }
+}

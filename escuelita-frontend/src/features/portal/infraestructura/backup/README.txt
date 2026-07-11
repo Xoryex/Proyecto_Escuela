@@ -1,0 +1,1 @@
+Backup temporal para mover archivos si es necesario antes de eliminar otras carpetas.

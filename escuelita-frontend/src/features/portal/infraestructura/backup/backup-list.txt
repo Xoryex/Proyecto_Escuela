@@ -1,0 +1,9 @@
+academica/
+alumnos/
+apoderados/
+configuracion/
+evaluaciones/
+matriculas/
+movimientos-alumno/
+tesoreria/
+index.ts
