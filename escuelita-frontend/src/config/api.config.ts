@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { adminAuthService } from '../services/adminAuth.service';
 import { escuelaAuthService } from '../services/escuelaAuth.service';
-
 // Configuración de la instancia de Axios para la API
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
