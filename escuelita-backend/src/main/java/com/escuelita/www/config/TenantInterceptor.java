@@ -13,7 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
-    
+   
+ // este metodo se ejecuta al finalizar de toda peticion, para limpiar el contexto del tenant
+ // evitando que otra peticion tenga los datos del usuario anterior
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, 
                                 Object handler, Exception ex) throws Exception {
