@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
     
+    
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, 
                                 Object handler, Exception ex) throws Exception {
