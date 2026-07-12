@@ -120,12 +120,33 @@ public class ChatbotService {
         try (Connection conn = getReadOnlyConnection()) {
             String dbName = conn.getCatalog();
 
-            String query = "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE " +
+            // 1. Obtener relaciones de clave foránea
+            Map<String, List<String>> foreignKeys = new HashMap<>();
+            String fkQuery = "SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME " +
+                             "FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
+                             "WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL";
+            try (PreparedStatement stmt = conn.prepareStatement(fkQuery)) {
+                stmt.setString(1, dbName);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String tableName = rs.getString("TABLE_NAME");
+                        String columnName = rs.getString("COLUMN_NAME");
+                        String refTable = rs.getString("REFERENCED_TABLE_NAME");
+                        String refColumn = rs.getString("REFERENCED_COLUMN_NAME");
+
+                        foreignKeys.computeIfAbsent(tableName, k -> new ArrayList<>())
+                                   .add(columnName + " -> " + refTable + "(" + refColumn + ")");
+                    }
+                }
+            }
+
+            // 2. Obtener columnas y tipos de datos (incluyendo tipos completos como enum)
+            String colQuery = "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, COLUMN_TYPE " +
                     "FROM INFORMATION_SCHEMA.COLUMNS " +
                     "WHERE TABLE_SCHEMA = ? " +
                     "ORDER BY TABLE_NAME, ORDINAL_POSITION";
 
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            try (PreparedStatement stmt = conn.prepareStatement(colQuery)) {
                 stmt.setString(1, dbName);
 
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -134,20 +155,38 @@ public class ChatbotService {
                         String tableName = rs.getString("TABLE_NAME");
                         String columnName = rs.getString("COLUMN_NAME");
                         String dataType = rs.getString("DATA_TYPE");
+                        String columnType = rs.getString("COLUMN_TYPE");
 
                         if (!tableName.equals(currentTable)) {
+                            if (!currentTable.isEmpty()) {
+                                appendForeignKeys(schemaDesc, currentTable, foreignKeys);
+                            }
                             currentTable = tableName;
                             schemaDesc.append("\nTabla: ").append(tableName).append("\nColumnas: ");
                         } else {
                             schemaDesc.append(", ");
                         }
-                        schemaDesc.append(columnName).append(" (").append(dataType).append(")");
+
+                        // Si es tipo enum, usamos COLUMN_TYPE para que contenga los valores permitidos (ej. enum('ACTIVO','INACTIVO'))
+                        String finalType = dataType.equalsIgnoreCase("enum") ? columnType : dataType;
+                        schemaDesc.append(columnName).append(" (").append(finalType).append(")");
+                    }
+                    if (!currentTable.isEmpty()) {
+                        appendForeignKeys(schemaDesc, currentTable, foreignKeys);
                     }
                 }
             }
         }
 
         return schemaDesc.toString();
+    }
+
+    private void appendForeignKeys(StringBuilder schemaDesc, String tableName, Map<String, List<String>> foreignKeys) {
+        List<String> fks = foreignKeys.get(tableName);
+        if (fks != null && !fks.isEmpty()) {
+            schemaDesc.append("\nRelaciones: ").append(String.join(", ", fks));
+        }
+        schemaDesc.append("\n");
     }
 
     /**
@@ -166,7 +205,6 @@ public class ChatbotService {
             this.dbSchemaCached = esquema;
         }
 
-        // 2. Definir system prompt para la generación de la consulta SQL
         String sqlSystemPrompt = "Eres un asistente experto en bases de datos MySQL. Tu única tarea es generar una consulta SQL válida (SELECT, INSERT, UPDATE o DELETE) basada en la estructura de la base de datos provista.\n"
                 +
                 "Reglas obligatorias:\n" +
@@ -175,7 +213,8 @@ public class ChatbotService {
                 "3. Para cualquier otra tabla (como `usuarios`, `sedes`, `planes`, `suscripciones`, `roles`, etc.), solo tienes permiso de lectura. NO generes INSERT, UPDATE o DELETE sobre ellas.\n" +
                 "4. NO está permitido modificar la estructura de la base de datos (nada de DROP, ALTER, CREATE, TRUNCATE, etc.).\n" +
                 "5. Devuelve únicamente el código SQL limpio. NO uses bloques de código de markdown (```sql ... ```), ni explicaciones ni texto introductorio. Solo el código SQL directamente listo para ejecutarse.\n" +
-                "6. Responde con el SQL exacto para MySQL que responda a la pregunta o instrucción del usuario basándote en las tablas y campos indicados.";
+                "6. Responde con el SQL exacto para MySQL que responda a la pregunta o instrucción del usuario basándote en las tablas y campos indicados.\n" +
+                "7. IMPORTANTE: Para relacionar (JOIN) tablas, utiliza únicamente las columnas especificadas en la sección 'Relaciones'. No asumas que una columna existe en una tabla si no está listada en sus 'Columnas' (por ejemplo, no intentes buscar 'id_matricula' en la tabla 'alumnos', ya que no existe).";
 
         String userPromptSqlGen = "Estructura de la base de datos:\n" + esquema + "\n\n" +
                 "Instrucción del usuario: " + pregunta + "\n\n" +
