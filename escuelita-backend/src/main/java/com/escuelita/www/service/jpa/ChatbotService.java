@@ -37,7 +37,7 @@ public class ChatbotService {
     @Autowired
     private OllamaClient ollamaClient;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Autowired
     private DataSource primaryDataSource;
