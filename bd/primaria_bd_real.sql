@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: localhost:3306
--- Tiempo de generación: 10-03-2026 a las 15:38:36
--- Versión del servidor: 10.11.16-MariaDB
--- Versión de PHP: 8.4.18
+-- Servidor: 127.0.0.1:3307
+-- Tiempo de generación: 12-07-2026 a las 01:12:37
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,30 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `primaria_bd_real`
 --
-
-DELIMITER $$
---
--- Procedimientos
---
-CREATE DEFINER=`primaria`@`localhost` PROCEDURE `validarAccesoModuloUsuario` (IN `p_idUsuario` BIGINT, IN `p_idModulo` BIGINT)   BEGIN
-  DECLARE v_idRol BIGINT DEFAULT NULL;
-  DECLARE v_existe INT DEFAULT 0;
-  
-  SELECT id_rol INTO v_idRol FROM usuarios WHERE id_usuario = p_idUsuario LIMIT 1;
-  
-  IF v_idRol IS NULL THEN
-    SELECT 0 as resultado;
-  ELSEIF v_idRol = 1 THEN
-    SELECT 1 as resultado;
-  ELSE
-    SELECT COALESCE((SELECT COUNT(*) FROM rol_modulo 
-                     WHERE id_rol = v_idRol 
-                     AND id_modulo = p_idModulo 
-                     AND estado = 1), 0) as resultado;
-  END IF;
-END$$
-
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -335,20 +311,21 @@ CREATE TABLE `cursos` (
   `id_curso` bigint(20) UNSIGNED NOT NULL,
   `id_area` bigint(20) UNSIGNED NOT NULL,
   `nombre_curso` varchar(255) DEFAULT NULL,
-  `estado` int(11) DEFAULT NULL
+  `estado` int(11) DEFAULT NULL,
+  `id_sede` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `cursos`
 --
 
-INSERT INTO `cursos` (`id_curso`, `id_area`, `nombre_curso`, `estado`) VALUES
-(4, 4, 'ARITMETICA', 1),
-(5, 4, 'ALGEBRA', 1),
-(6, 4, 'GEOMETRIA', 1),
-(7, 4, 'RAZONAMIENTO MATEMATICO', 1),
-(8, 5, 'GRAMATICA', 1),
-(9, 5, 'COMPRENSIONLECTORA/LITERATURA', 1);
+INSERT INTO `cursos` (`id_curso`, `id_area`, `nombre_curso`, `estado`, `id_sede`) VALUES
+(4, 4, 'ARITMETICA', 1, NULL),
+(5, 4, 'ALGEBRA', 1, NULL),
+(6, 4, 'GEOMETRIA', 1, NULL),
+(7, 4, 'RAZONAMIENTO MATEMATICO', 1, NULL),
+(8, 5, 'GRAMATICA', 1, NULL),
+(9, 5, 'COMPRENSIONLECTORA/LITERATURA', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -588,7 +565,8 @@ CREATE TABLE `malla_curricular` (
   `id_anio` bigint(20) UNSIGNED NOT NULL,
   `id_grado` bigint(20) UNSIGNED NOT NULL,
   `id_curso` bigint(20) UNSIGNED NOT NULL,
-  `estado` int(11) DEFAULT NULL
+  `estado` int(11) DEFAULT NULL,
+  `id_sede` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -605,7 +583,7 @@ CREATE TABLE `matriculas` (
   `codigo_matricula` varchar(30) DEFAULT NULL,
   `fecha_matricula` datetime DEFAULT current_timestamp(),
   `situacion_academica_previa` enum('Promovido','Repitente','Ingresante') NOT NULL,
-  `estado_matricula` enum('Activa','Retirada','Trasladado_Saliente') NOT NULL,
+  `estado_matricula` enum('Pendiente_Pago','Activa','Finalizada','Cancelada') NOT NULL,
   `observaciones_matricula` text DEFAULT NULL,
   `fecha_retiro` date DEFAULT NULL,
   `motivo_retiro` text DEFAULT NULL,
@@ -749,7 +727,7 @@ CREATE TABLE `pagos_suscripcion` (
 --
 
 INSERT INTO `pagos_suscripcion` (`id_pago`, `banco`, `comprobante_url`, `estado`, `estado_verificacion`, `fecha_pago`, `fecha_registro`, `fecha_verificacion`, `monto_pagado`, `numero_operacion`, `numero_pago`, `observaciones`, `id_metodo_pago`, `id_suscripcion`, `verificado_por`) VALUES
-(1, NULL, '271cb14f-4662-473d-a4f8-a0555372a112.jpeg', 1, 'VERIFICADO', '2026-03-07', '2026-03-07 14:50:25.000000', '2026-03-07 15:14:40', 10.00, '000049100', 'PAGO-00001', 'Pago programado automáticamente - Período 1 de 3', 2, 30, 1),
+(1, NULL, '271cb14f-4662-473d-a4f8-a0555372a112.jpeg', 1, 'VERIFICADO', '2026-07-01', '2026-03-07 14:50:25.000000', '2026-03-07 15:14:40', 10.00, '000049100', 'PAGO-00001', 'Pago programado automáticamente - Período 1 de 3', 2, 30, 1),
 (2, NULL, NULL, 1, 'PENDIENTE', '2026-04-07', '2026-03-07 14:50:25.000000', NULL, 10.00, NULL, 'PAGO-00002', 'Pago programado automáticamente - Período 2 de 3', NULL, 30, NULL),
 (3, NULL, NULL, 1, 'PENDIENTE', '2026-05-07', '2026-03-07 14:50:25.000000', NULL, 10.00, NULL, 'PAGO-00003', 'Pago programado automáticamente - Período 3 de 3', NULL, 30, NULL),
 (4, NULL, NULL, 0, 'PENDIENTE', '2025-01-01', '2026-03-07 20:31:53.000000', NULL, 100.00, NULL, 'PAGO-00004', 'Pago programado automáticamente - Período 1 de 3', NULL, 31, NULL),
@@ -757,7 +735,7 @@ INSERT INTO `pagos_suscripcion` (`id_pago`, `banco`, `comprobante_url`, `estado`
 (6, NULL, NULL, 0, 'PENDIENTE', '2027-01-01', '2026-03-07 20:31:53.000000', NULL, 100.00, NULL, 'PAGO-00006', 'Pago programado automáticamente - Período 3 de 3', NULL, 31, NULL),
 (92, NULL, '2826e70c-cd00-4769-806a-f6900cdbd293.webp', 1, 'VERIFICADO', '2026-03-01', '2026-03-07 20:41:45.000000', '2026-03-07 20:44:10', 100.00, '000049101', 'PAGO-00092', 'Pago programado automáticamente - Período 1 de 2', 1, 31, 1),
 (93, NULL, NULL, 1, 'PENDIENTE', '2027-01-01', '2026-03-07 20:41:45.000000', NULL, 100.00, NULL, 'PAGO-00093', 'Pago programado automáticamente - Período 2 de 2', NULL, 31, NULL),
-(94, NULL, '7aa855ac-1382-46db-8845-61f0b4b7ec8d.webp', 1, 'VERIFICADO', '2026-03-01', '2026-03-07 21:02:41.000000', '2026-03-07 21:07:20', 15.00, '000004', 'PAGO-00094', 'Pago programado automáticamente - Período 1 de 10', 1, 32, 1),
+(94, NULL, '7aa855ac-1382-46db-8845-61f0b4b7ec8d.webp', 1, 'VERIFICADO', '2026-07-01', '2026-03-07 21:02:41.000000', '2026-03-07 21:07:20', 15.00, '000004', 'PAGO-00094', 'Pago programado automáticamente - Período 1 de 10', 1, 32, 1),
 (95, NULL, NULL, 1, 'PENDIENTE', '2026-04-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00095', 'Pago programado automáticamente - Período 2 de 10', NULL, 32, NULL),
 (96, NULL, NULL, 1, 'PENDIENTE', '2026-05-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00096', 'Pago programado automáticamente - Período 3 de 10', NULL, 32, NULL),
 (97, NULL, NULL, 1, 'PENDIENTE', '2026-06-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00097', 'Pago programado automáticamente - Período 4 de 10', NULL, 32, NULL),
@@ -767,9 +745,9 @@ INSERT INTO `pagos_suscripcion` (`id_pago`, `banco`, `comprobante_url`, `estado`
 (101, NULL, NULL, 1, 'PENDIENTE', '2026-10-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00101', 'Pago programado automáticamente - Período 8 de 10', NULL, 32, NULL),
 (102, NULL, NULL, 1, 'PENDIENTE', '2026-11-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00102', 'Pago programado automáticamente - Período 9 de 10', NULL, 32, NULL),
 (103, NULL, NULL, 1, 'PENDIENTE', '2026-12-01', '2026-03-07 21:02:41.000000', NULL, 15.00, NULL, 'PAGO-00103', 'Pago programado automáticamente - Período 10 de 10', NULL, 32, NULL),
-(104, NULL, '5710e3e9-743e-4046-8874-0932f20c50bc.webp', 1, 'VERIFICADO', '2026-03-07', '2026-03-07 21:14:18.000000', '2026-03-07 21:14:51', 120.00, '000005', 'PAGO-00104', 'Pago programado automáticamente - Período 1 de 2', 1, 33, 1),
+(104, NULL, '5710e3e9-743e-4046-8874-0932f20c50bc.webp', 1, 'VERIFICADO', '2026-07-01', '2026-03-07 21:14:18.000000', '2026-03-07 21:14:51', 120.00, '000005', 'PAGO-00104', 'Pago programado automáticamente - Período 1 de 2', 1, 33, 1),
 (105, NULL, NULL, 1, 'PENDIENTE', '2026-04-07', '2026-03-07 21:14:18.000000', NULL, 120.00, NULL, 'PAGO-00105', 'Pago programado automáticamente - Período 2 de 2', NULL, 33, NULL),
-(106, NULL, '05af0804-11e8-465f-9339-8d0d5610d273.webp', 1, 'VERIFICADO', '2026-03-01', '2026-03-07 21:18:56.000000', '2026-03-07 21:21:02', 190.00, '000006', 'PAGO-00106', 'Pago programado automáticamente - Período 1 de 13', 1, 34, 1),
+(106, NULL, '05af0804-11e8-465f-9339-8d0d5610d273.webp', 1, 'VERIFICADO', '2026-07-01', '2026-03-07 21:18:56.000000', '2026-03-07 21:21:02', 190.00, '000006', 'PAGO-00106', 'Pago programado automáticamente - Período 1 de 13', 1, 34, 1),
 (107, NULL, '34561049-1924-4059-8a4b-3e9807afb54b.webp', 1, 'VERIFICADO', '2026-04-01', '2026-03-07 21:18:56.000000', '2026-03-08 03:24:41', 190.00, '000001', 'PAGO-00107', 'Pago programado automáticamente - Período 2 de 13', 1, 34, 1),
 (108, NULL, NULL, 1, 'PENDIENTE', '2026-05-01', '2026-03-07 21:18:56.000000', NULL, 190.00, NULL, 'PAGO-00108', 'Pago programado automáticamente - Período 3 de 13', NULL, 34, NULL),
 (109, NULL, NULL, 1, 'PENDIENTE', '2026-06-01', '2026-03-07 21:18:56.000000', NULL, 190.00, NULL, 'PAGO-00109', 'Pago programado automáticamente - Período 4 de 13', NULL, 34, NULL),
@@ -1125,11 +1103,11 @@ CREATE TABLE `suscripciones` (
 --
 
 INSERT INTO `suscripciones` (`id_suscripcion`, `id_institucion`, `id_plan`, `id_ciclo`, `id_estado`, `limite_alumnos_contratado`, `limite_sedes_contratadas`, `precio_acordado`, `fecha_inicio`, `fecha_vencimiento`, `estado`, `tipo_distribucion_limite`) VALUES
-(30, 33, 3, 1, 1, 5, 1, 10.00, '2026-03-07', '2026-06-07', 1, 'EQUITATIVA'),
-(31, 35, 3, 2, 1, 10, 1, 100.00, '2026-01-01', '2028-01-01', 1, 'EQUITATIVA'),
-(32, 36, 3, 1, 1, 10, 1, 15.00, '2026-03-01', '2027-01-01', 1, 'EQUITATIVA'),
-(33, 37, 3, 1, 1, 10, 2, 120.00, '2026-03-07', '2026-05-07', 1, 'EQUITATIVA'),
-(34, 34, 3, 1, 1, 10, 2, 190.00, '2026-03-01', '2027-04-01', 1, 'EQUITATIVA');
+(30, 33, 3, 1, 1, 5, 1, 10.00, '2026-03-07', '2028-12-31', 1, 'EQUITATIVA'),
+(31, 35, 3, 2, 1, 10, 1, 100.00, '2026-01-01', '2028-12-31', 1, 'EQUITATIVA'),
+(32, 36, 3, 1, 1, 10, 1, 15.00, '2026-03-01', '2028-12-31', 1, 'EQUITATIVA'),
+(33, 37, 3, 1, 1, 10, 2, 120.00, '2026-03-07', '2028-12-31', 1, 'EQUITATIVA'),
+(34, 34, 3, 1, 1, 10, 2, 190.00, '2026-03-01', '2028-12-31', 1, 'EQUITATIVA');
 
 -- --------------------------------------------------------
 
@@ -1231,11 +1209,11 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `id_sede`, `id_rol`, `id_tipo_doc`, `numero_documento`, `apellidos`, `nombres`, `correo`, `usuario`, `contraseña`, `foto_perfil`, `estado`) VALUES
-(1, 16, 1, 1, '76868793', 'YAJAHUANCA FERNANDEZ', 'LUIS ALBERTO', 'luisalbertoyajahuancafernandez@gmail.com', 'luis', '$2a$10$6oAG0zgT8b8cIzVvlRvFJOzdJtJSF.ezF7Hc4GlPJgvP3DcH.lXiK', '', 1),
-(33, 17, 1, 1, '76269185', 'AREVALO ROMERO', 'NAYELLI YULEY', 'ny.arevaloro@unsm.edu.pe', 'Nay', '$2a$10$2QEgmsAeHRm0fKDHRdR3eu50/O/bDJhhrj5TL4mi9fCThx.Rt4UJa', '', 1),
-(34, 18, 1, 1, '77219351', 'CONTRERAS BERNILLA', 'JUDITH MARIANELLA', 'jm.contrerasbe@unsm.edu.pe', 'Mari', '$2a$10$sPWwnybQ1Rxg2ECy2Xx9eeQ.wa.CP.hltlkritILlwgKV8pk2Iq8O', '/uploads/logos/04cf002d-114d-44cc-b2cb-ab9cd2d11bbb.jpg', 1),
-(35, 19, 1, 1, '72240942', 'MUÑOZ MOZOMBITE', 'MARTIN', 'm.munozmo@unsm.edu.pe', 'Marki', '$2a$10$C1ONoK7QbjJoD071lgMEcuP3YOZjFfvBoFRkr.veWk4Y8vjdZLgdm', '', 1),
-(36, 20, 1, 1, '74654276', 'BERRU LOZANO', 'CRISTINA', 'c.berrulo@unsm.edu.pe', 'Cristina', '$2a$10$w3TZ9LLIeC4NGSkUhbuQbOVBuZreocmV0NkZ.A0.M32KSBiK.V.36', '/uploads/logos/98fcdcb3-8b38-4fcb-90a5-458efbf6a65c.jpg', 1),
+(1, 16, 1, 1, '76868793', 'YAJAHUANCA FERNANDEZ', 'LUIS ALBERTO', 'luisalbertoyajahuancafernandez@gmail.com', 'luis', '$2a$10$Yd7y60O2ZOxCPmVEowmyZOvUubHoyMYqSnDqhhcMsJBsIwBsypa8i', '', 1),
+(33, 17, 1, 1, '76269185', 'AREVALO ROMERO', 'NAYELLI YULEY', 'ny.arevaloro@unsm.edu.pe', 'Nay', 'admin123', '', 1),
+(34, 18, 1, 1, '77219351', 'CONTRERAS BERNILLA', 'JUDITH MARIANELLA', 'jm.contrerasbe@unsm.edu.pe', 'Mari', 'admin123', '/uploads/logos/04cf002d-114d-44cc-b2cb-ab9cd2d11bbb.jpg', 1),
+(35, 19, 1, 1, '72240942', 'MUÑOZ MOZOMBITE', 'MARTIN', 'm.munozmo@unsm.edu.pe', 'Marki', 'admin123', '', 1),
+(36, 20, 1, 1, '74654276', 'BERRU LOZANO', 'CRISTINA', 'c.berrulo@unsm.edu.pe', 'Cristina', 'admin123', '/uploads/logos/98fcdcb3-8b38-4fcb-90a5-458efbf6a65c.jpg', 1),
 (37, 16, 2, 1, '44551223', 'yajahuanca', 'LUCHO 2', 'luchoyaja@gmail.com', 'profesor1', 'profesor123', NULL, 1),
 (38, 18, 2, 1, '74512698', 'profe', 'pepito', 'pepito@unsm.edu.pe', 'pepito', '$2a$10$p2CuAejpkRJGsolEdYCJOeoNEKjWDxUITejiaXgU6AoUTRRZS0IWW', NULL, 1),
 (39, 18, 2, 1, '45621398', 'Flores', 'Juan', 'juancitoflore@gmail.com', 'juancito', '$2a$10$/8nMMTOpfeKmRCEfm/LCoOeGWYuW47vWO5MFA5C4zROJJkRaXQ3F2', NULL, 1),
