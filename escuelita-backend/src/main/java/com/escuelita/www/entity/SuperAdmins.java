@@ -19,8 +19,8 @@ import jakarta.persistence.Table;
 @SQLDelete(sql = "UPDATE super_admins SET estado=0 WHERE id_admin=?")
 @SQLRestriction("estado = 1")
 @JsonPropertyOrder({
-    "idAdmin", "nombres", "apellidos", "correo",
-    "usuario", "password", "rolPlataforma", "fotoUrl", "estado"
+        "idAdmin", "nombres", "apellidos", "correo",
+        "usuario", "password", "rolPlataforma", "fotoUrl", "estado"
 })
 public class SuperAdmins {
     @Id
@@ -36,7 +36,7 @@ public class SuperAdmins {
     @Column(name = "rol_plataforma")
     private String rolPlataforma = "SUPER_ADMIN";
 
-    @Column(name = "foto_url", length = 255)
+    @Column(name = "foto_url", length = 255, nullable = true)
     private String fotoUrl;
 
     private Integer estado = 1;
@@ -44,6 +44,7 @@ public class SuperAdmins {
     // Constructor vacio
     public SuperAdmins() {
     }
+
     public SuperAdmins(Long idAdmin) {
         this.idAdmin = idAdmin;
     }
@@ -52,57 +53,75 @@ public class SuperAdmins {
     public Long getIdAdmin() {
         return idAdmin;
     }
+
     public void setIdAdmin(Long idAdmin) {
         this.idAdmin = idAdmin;
     }
+
     public String getNombres() {
         return nombres;
     }
+
     public void setNombres(String nombres) {
         this.nombres = nombres;
     }
+
     public String getApellidos() {
         return apellidos;
     }
+
     public void setApellidos(String apellidos) {
         this.apellidos = apellidos;
     }
+
     public String getCorreo() {
         return correo;
     }
+
     public void setCorreo(String correo) {
         this.correo = correo;
     }
+
     public String getUsuario() {
         return usuario;
     }
+
     public void setUsuario(String usuario) {
         this.usuario = usuario;
     }
+
     public String getPassword() {
         return password;
     }
+
     public void setPassword(String password) {
         this.password = password;
     }
+
     public String getRolPlataforma() {
         return rolPlataforma;
     }
+
     public void setRolPlataforma(String rolPlataforma) {
         this.rolPlataforma = rolPlataforma;
     }
+
     public Integer getEstado() {
         return estado;
     }
+
     public void setEstado(Integer estado) {
         this.estado = estado;
     }
+
     public String getFotoUrl() {
         return fotoUrl;
     }
+
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl;
     }
+
     @Override
     public String toString() {
         return "SuperAdmins [idAdmin=" + idAdmin + ", nombres=" + nombres + ", apellidos=" + apellidos + ", correo="

@@ -139,12 +139,7 @@ INSERT INTO `sedes` (`id_sede`, `id_institucion`, `nombre_sede`, `direccion`, `d
 
 -- super_admins
 INSERT INTO `super_admins` (`id_admin`, `nombres`, `apellidos`, `correo`, `usuario`, `password`, `rol_plataforma`, `estado`, `foto_url`) VALUES
-(1, 'Judith Mari', 'Contreras Bernilla', 'judithmarianella@unsm.edu.pe', 'judithmar', '$2a$10$P/QT5Bq.B1.iGh3TlZU8JefkC46nTt5huOQ9Kro84e2BTxNaSMDAO', 'SUPER_ADMIN', 1, '/uploads/perfiles/f932e7ee-086e-4005-88d3-8d612c8458e7.jpeg'),
-(2, 'Cristina', 'Berru Lozano', 'cristina.berru2909@gmail.com', 'Oicapse', '$2a$10$/hDSfEN2G.wpYVot7Y2Oe.R21jVVIKGxYOf8vISeEF3crYymg0A5W', 'SUPER_ADMIN', 1, '/uploads/perfiles/2230bed9-fc1c-455e-aee9-d111eac29edf.jpeg'),
-(3, 'Martin', 'Muñoz', 'Martin@gmail.com', 'Marki', '$2a$10$CUI4zR5fe9fKillz97DHB.1SxCosglMacAuA/JYRcfRzl2kRoucw2', 'ADMIN', 1, NULL),
-(4, 'Nayelli Yuley ', 'Arevalo Romero', 'nay@gmail.com', 'Nay', '$2a$10$TGpoFgm5GQ6PzNerFX.bD.WYzBSR3Nx16.IbqIe3hhsJMMg.OEkwq', 'ADMIN', 1, NULL),
-(5, 'Luis', 'YF', 'luisalbertoyajahuancafernandez@gmail.com', 'alberto', '$2a$10$1L4y68zZpK3b8WX59z998epSn.fndtgYLuyADtGku1ZkZ8KvC7qIe', 'ADMIN', 1, ''),
-(6, 'Herzen Layan', 'Rojas Perez', 'herzen@gmail.com', 'Biza', '$2a$10$j/7hzILJrXp1HDMrMKmniucJ8Hi2TJqBOzMrSAzC2Veyfw5dDn2ma', 'ADMIN', 1, NULL);
+(1, 'superadmin', 'administrador', 'superadmin@gmail.co,', 'superadmin', '$2a$10$Yd7y60O2ZOxCPmVEowmyZOvUubHoyMYqSnDqhhcMsJBsIwBsypa8i', 'SUPER_ADMIN', 1, '/uploads/perfiles/f932e7ee-086e-4005-88d3-8d612c8458e7.jpeg');
 
 -- aulas
 INSERT INTO `aulas` (`id_aula`, `id_sede`, `nombre_aula`, `capacidad`, `estado`) VALUES
