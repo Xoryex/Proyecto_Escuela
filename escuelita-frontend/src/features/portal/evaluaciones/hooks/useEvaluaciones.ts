@@ -15,7 +15,7 @@ export const useEvaluaciones = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Obtener asignaciones del docente logueado
-  const { idAsignacionesArray, loading: loadingAsignaciones } = useAsignacionesDocente();
+  const { idAsignacionesArray} = useAsignacionesDocente();
 
   // Filtrar evaluaciones según el rol del usuario
   const evaluacionesFiltradas = useMemo(() => {
@@ -27,7 +27,7 @@ export const useEvaluaciones = () => {
     if (esProfesor && !esAdministrador) {
       return evaluaciones.filter(ev => {
         const idAsignacion = typeof ev.idAsignacion === 'object' 
-          ? ev.idAsignacion?.idAsignacion 
+          ? ev.idAsignacion 
           : ev.idAsignacion;
         return idAsignacionesArray.includes(idAsignacion);
       });

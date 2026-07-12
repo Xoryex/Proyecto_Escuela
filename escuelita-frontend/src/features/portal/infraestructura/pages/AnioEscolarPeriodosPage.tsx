@@ -133,7 +133,6 @@ const AnioEscolarPeriodosPage: React.FC = () => {
         }
     };
 
-    const aniosActivos = aniosEscolares.filter(a => a.activo).length;
 
     // --------------------- PERIODOS ---------------------
     const totalPagesPeriodos = Math.ceil(periodos.length / itemsPerPage);

@@ -18,7 +18,7 @@ const normalizeText = (value?: string | number | null) =>
         .replace(/[\u0300-\u036f]/g, '');
 
 const AlumnosReportePage: React.FC = () => {
-    const { alumnos, instituciones, sedes, isLoading, recargar } = useReportes();
+    const { alumnos, instituciones, isLoading, recargar } = useReportes();
 
     const [activeTab, setActiveTab] = useState<AlumnosTab>('detalle');
     const [searchTerm, setSearchTerm] = useState('');

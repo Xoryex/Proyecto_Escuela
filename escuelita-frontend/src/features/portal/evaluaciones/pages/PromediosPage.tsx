@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast, Toaster } from 'sonner';
 import { api, API_ENDPOINTS } from '../../../../config/api.config';
 import { usePermisoModulo } from '../../../../hooks/usePermisoModulo';
-import { useAsignacionesDocente, useCalificaciones } from '../hooks';
+import { useCalificaciones } from '../hooks';
 import type { Calificaciones, Periodos } from '../types';
 
 interface FilterState {
@@ -36,7 +36,6 @@ const PromediosPage: React.FC = () => {
 
   // Usar hooks que filtran automáticamente por docente logueado
   const { calificaciones, loading: loadingCalificaciones } = useCalificaciones();
-  const { asignaciones } = useAsignacionesDocente();
 
   // Estados
   const [periodos, setPeriodos] = useState<Periodos[]>([]);

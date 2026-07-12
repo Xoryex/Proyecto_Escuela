@@ -69,6 +69,7 @@ export const useReportes = () => {
             ]);
 
             const endpointNames = ['Instituciones', 'Suscripciones', 'Usuarios', 'SuperAdmins', 'Pagos', 'Alumnos', 'Planes', 'Sedes'];
+
             const data = results.map((result, index) => {
                 if (result.status === 'fulfilled') {
                     return result.value;
@@ -77,10 +78,19 @@ export const useReportes = () => {
                 return [];
             });
 
-            const [institucionesData, suscripcionesData, usuariosData, superAdminsData, pagosCajaData, alumnosData, planesData, sedesData] = data;
+            const [institucionesData, suscripcionesData, usuariosData, superAdminsData, pagosCajaData, alumnosData, planesData, sedesData] = data as [
+                ReporteInstitucion[],
+                ReporteSuscripcion[],
+                ReporteUsuarioSistema[],
+                ReporteSuperAdmin[],
+                ReportePagoCaja[],
+                ReporteAlumno[],
+                any[],  // Planes no tiene interfaz definida
+                ReporteSede[]
+            ];
 
             // JOIN en memoria: Combinar instituciones con su suscripción activa
-            const institucionesConSuscripcion = (institucionesData || []).map((inst: any) => {
+            const institucionesConSuscripcion = (institucionesData || []).map((inst:any) => {
                 const suscActiva = (suscripcionesData || []).find((s: any) =>
                     s.idInstitucion?.idInstitucion === inst.idInstitucion &&
                     normalizarEstado(s.idEstado?.nombre).includes('ACT')
@@ -195,7 +205,7 @@ export const useReportes = () => {
         return Array.from(map.values()).sort((a, b) => b.ingresoTotal - a.ingresoTotal);
     }, [suscripciones]);
 
-    const ingresosPorMetodoPago = useMemo<IngresoPorMetodoPago[]>(() => {
+    const ingresosPorMetodoPago = useMemo(() => {
         const map = new Map<string, IngresoPorMetodoPago>();
 
         pagosCaja.forEach(pago => {
@@ -238,7 +248,7 @@ export const useReportes = () => {
                 idInstitucion: inst.idInstitucion,
                 nombre: inst.nombre,
                 codModular: inst.codModular,
-                estadoSuscripcion: inst.estadoSuscripcion,
+                estadoSuscripcion: inst.estadoSuscripcion || 'Sin estado',
                 totalUsuarios,
                 porcentajeUso
             };

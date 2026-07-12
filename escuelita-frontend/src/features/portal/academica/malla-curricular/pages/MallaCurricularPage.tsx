@@ -21,8 +21,8 @@ const PAGE_SIZE = 10;
 
 const MallaCurricularPage: React.FC = () => {
     const {
-        mallasCurriculares, cursos, areas, grados, anios, loading, error,
-        fetchMallasCurriculares, createMallaCurricular,
+        mallasCurriculares, cursos, grados, anios, loading, error,
+        createMallaCurricular,
         updateMallaCurricular, deleteMallaCurricular
     } = useMallaCurricular();
 

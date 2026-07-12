@@ -1,4 +1,4 @@
-import { AlertCircle, Edit, Plus, Search, Trash2, Filter, CheckCircle, Users, TrendingUp, Clock } from 'lucide-react';
+import { AlertCircle, Edit, Plus, Search, Trash2, Filter, Users, TrendingUp, Clock } from 'lucide-react';
 import React, { useState } from 'react';
 import { Toaster } from 'sonner';
 import Pagination from '../../../../../components/common/Pagination';

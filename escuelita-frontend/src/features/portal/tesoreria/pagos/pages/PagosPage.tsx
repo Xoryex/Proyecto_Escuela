@@ -1,4 +1,4 @@
-import { DollarSign, Edit, Eye, Plus, Search, Trash2, Filter, AlertCircle, CheckCircle, Receipt, X } from 'lucide-react';
+import { DollarSign, Eye, Plus, Search, Trash2, Filter, CheckCircle, Receipt, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { Toaster } from 'sonner';
 import Pagination from '../../../../../components/common/Pagination';
@@ -349,7 +349,7 @@ const PagosPage: React.FC = () => {
                                         Deudas Pagadas
                                     </p>
                                     <div className="space-y-2">
-                                        {pagoActual.detalles.map((detalle, idx) => (
+                                        {pagoActual.detalles.map((detalle) => (
                                             <div key={detalle.idPagoDetalle} className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                                                 <div className="flex items-start justify-between">
                                                     <div>

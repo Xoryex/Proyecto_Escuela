@@ -27,7 +27,7 @@ export const usePromediosPeriodo = () => {
     if (esProfesor && !esAdministrador) {
       return promedios.filter(prom => {
         const idAsignacion = typeof prom.idAsignacion === 'object' 
-          ? prom.idAsignacion?.idAsignacion 
+          ? prom.idAsignacion 
           : prom.idAsignacion;
         return idAsignacionesArray.includes(idAsignacion);
       });

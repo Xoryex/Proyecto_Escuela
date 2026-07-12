@@ -11,7 +11,6 @@ export {
 } from './hooks/useInfraestructura';
 
 // Components
-export { default as SedeForm } from './components/SedeForm';
 export { default as GradoForm } from './components/GradoForm';
 export { default as SeccionForm } from './components/SeccionForm';
 export { default as AulaForm } from './components/AulaForm';
@@ -21,7 +20,6 @@ export { default as PeriodoForm } from './components/PeriodoForm';
 // Pages
 export { default as InfraestructuraRoutes } from './routes/InfraestructuraRoutes';
 export { default as InstitucionPage } from './pages/InstitucionPage';
-export { default as SedesPage } from './pages/SedesPage';
 export { default as AnioEscolarPage } from './pages/AnioEscolarPage';
 export { default as PeriodosPage } from './pages/PeriodosPage';
 export { default as GradosPage } from './pages/GradosPage';

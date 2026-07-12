@@ -27,7 +27,7 @@ export const useAsistencias = () => {
     if (esProfesor && !esAdministrador) {
       return asistencias.filter(asi => {
         const idAsignacion = typeof asi.idAsignacion === 'object' 
-          ? asi.idAsignacion?.idAsignacion 
+          ? asi.idAsignacion 
           : asi.idAsignacion;
         return idAsignacionesArray.includes(idAsignacion);
       });

@@ -52,7 +52,7 @@ export const useAsignacionesDocente = () => {
       // Si es profesor, el backend YA debe filtrar por JWT
       // Pero aplicamos filtro adicional por seguridad
       if (esProfesor && !esAdministrador) {
-        const usuarioId = usuarioActual?.id || usuarioActual?.idUsuario;
+        const usuarioId = usuarioActual?.idUsuario;
         console.log('🔐 Profesor logueado - ID:', usuarioId);
         
         // El backend debe filtrar por idDocente == usuario actual

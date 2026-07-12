@@ -117,30 +117,30 @@ const SeccionForm: React.FC<SeccionFormProps> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>Vacantes <span className="text-red-500">*</span></span>
-                        </label>
-                        <input
-                            type="number"
-                            name="vacantes"
-                            value={formData.vacantes}
-                            onChange={handleChange}
-                            required
-                            min="1"
-                            max={maxVacantes}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-escuela focus:border-transparent ${
-                                formData.vacantes > maxVacantes ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                            }`}
-                        />
-                        {vacantesDisponibles != null && vacantesDisponibles > 0 && (
-                            <p className={`text-xs mt-1 flex items-center gap-1 ${
-                                formData.vacantes > maxVacantes ? 'text-red-600 font-medium' : 'text-gray-500'
-                            }`}>
-                                {formData.vacantes > maxVacantes && <AlertTriangle className="w-3 h-3" />}
-                                Máximo permitido por el plan: {vacantesDisponibles}
-                            </p>
-                        )}
+    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center space-x-1">
+        <Users className="w-4 h-4" />
+        <span>Vacantes <span className="text-red-500">*</span></span>
+    </label>
+    <input
+        type="number"
+        name="vacantes"
+        value={formData.vacantes}
+        onChange={handleChange}
+        required
+        min="1"
+        max={maxVacantes}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-escuela focus:border-transparent ${
+            (formData.vacantes || 0) > maxVacantes ? 'border-red-400 bg-red-50' : 'border-gray-300'
+        }`}
+    />
+    {vacantesDisponibles != null && vacantesDisponibles > 0 && (
+        <p className={`text-xs mt-1 flex items-center gap-1 ${
+            (formData.vacantes || 0) > maxVacantes ? 'text-red-600 font-medium' : 'text-gray-500'
+        }`}>
+            {(formData.vacantes || 0) > maxVacantes && <AlertTriangle className="w-3 h-3" />}
+            Máximo permitido por el plan: {vacantesDisponibles}
+        </p>
+    )}
                     </div>
 
                     {/* Botones */}
@@ -155,7 +155,7 @@ const SeccionForm: React.FC<SeccionFormProps> = ({
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading || formData.vacantes > maxVacantes}
+                            disabled={isLoading || (formData.vacantes || 0) > maxVacantes}
                             className="px-6 py-2 bg-escuela text-white rounded-lg hover:bg-escuela-dark transition-colors disabled:opacity-50"
                         >
                             {isLoading ? 'Guardando...' : (seccion ? 'Actualizar' : 'Crear')}

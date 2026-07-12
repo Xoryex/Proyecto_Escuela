@@ -233,7 +233,7 @@ const EvaluacionForm: React.FC<EvaluacionFormProps> = ({
                         const cursoNombre = cursoObj?.nombreCurso || cursoObj?.nombre || 'Curso desconocido';
                         
                         // Obtener el área del curso
-                        const areaObj = typeof cursoObj?.idArea === 'object' ? cursoObj.idArea : null;
+                        const areaObj = typeof cursoObj?.idArea === 'object' ? (cursoObj.idArea as any) : null;
                         const areaNombre = areaObj?.nombreArea || areaObj?.nombre || 'Área desconocida';
                         
                         return (

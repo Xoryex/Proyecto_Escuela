@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "SystemEscuela",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Escuela Login"
+  },
+  "description": {
+    "en_EN": "Acceso al sistema de la escuela"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

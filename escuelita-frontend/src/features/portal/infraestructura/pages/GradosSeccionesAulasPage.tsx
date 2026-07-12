@@ -30,21 +30,21 @@ const GradosSeccionesAulasPage: React.FC = () => {
     const { registros: sedes, obtenerTodos: obtenerSedes } = useSedes();
 
     // Estados Grados
-    const [searchTermGrados, setSearchTermGrados] = useState('');
+    const [searchTermGrados] = useState('');
     const [currentPageGrados, setCurrentPageGrados] = useState(1);
     const [showModalGrado, setShowModalGrado] = useState(false);
     const [gradoSeleccionado, setGradoSeleccionado] = useState<Grado | null>(null);
     const [isSubmittingGrado, setIsSubmittingGrado] = useState(false);
 
     // Estados Secciones
-    const [searchTermSecciones, setSearchTermSecciones] = useState('');
+    const [searchTermSecciones] = useState('');
     const [currentPageSecciones, setCurrentPageSecciones] = useState(1);
     const [showModalSeccion, setShowModalSeccion] = useState(false);
     const [seccionSeleccionada, setSeccionSeleccionada] = useState<Seccion | null>(null);
     const [isSubmittingSeccion, setIsSubmittingSeccion] = useState(false);
 
     // Estados Aulas
-    const [searchTermAulas, setSearchTermAulas] = useState('');
+    const [searchTermAulas] = useState('');
     const [currentPageAulas, setCurrentPageAulas] = useState(1);
     const [showModalAula, setShowModalAula] = useState(false);
     const [aulaSeleccionada, setAulaSeleccionada] = useState<Aula | null>(null);
