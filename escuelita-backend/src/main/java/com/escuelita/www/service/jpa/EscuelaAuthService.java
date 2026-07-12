@@ -41,29 +41,8 @@ public class EscuelaAuthService {
             throw new Exception("Usuario inactivo");
         }
         
-        // 3. Validar contraseña
-        String passwordBD = usuario.getContrasena();
-        boolean passwordValida = false;
-        
-        // Detectar si la contraseña en BD está hasheada o en texto plano
-        if (passwordBD.startsWith("$2a$") || passwordBD.startsWith("$2y$") || passwordBD.startsWith("$2b$")) {
-            // Contraseña hasheada - validar con BCrypt
-            passwordValida = passwordEncoder.matches(request.getContrasena(), passwordBD);
-        } else {
-            // Contraseña en texto plano - comparar directamente
-            if (passwordBD.equals(request.getContrasena())) {
-                passwordValida = true;
-                
-                // ACTUALIZAR la contraseña a formato hash automáticamente
-                String nuevoHash = passwordEncoder.encode(request.getContrasena());
-                usuario.setContrasena(nuevoHash);
-                usuariosRepository.save(usuario);
-                
-                System.out.println("⚠️  Contraseña actualizada a formato hash para usuario de escuela: " + usuario.getUsuario());
-            }
-        }
-        
-        if (!passwordValida) {
+        // 3. Validar contraseña con BCrypt
+        if (!passwordEncoder.matches(request.getContrasena(), usuario.getContrasena())) {
             throw new Exception("Contraseña incorrecta");
         }
         

@@ -29,6 +29,7 @@ import com.escuelita.www.repository.ModulosRepository;
 import com.escuelita.www.repository.ModuloAccesoRepository;
 import com.escuelita.www.service.IUsuariosService;
 import com.escuelita.www.security.RequireModulo;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @RestController
 @RequestMapping("/restful")
@@ -45,7 +46,9 @@ public class UsuariosController {
     @Autowired
     private ModulosRepository repoModulos;
     @Autowired
-    private ModuloAccesoRepository repoModuloAcceso; 
+    private ModuloAccesoRepository repoModuloAcceso;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; 
 
     @GetMapping("/usuarios")
     @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
@@ -66,7 +69,7 @@ public class UsuariosController {
         usuarios.setNombres(dto.getNombres());
         usuarios.setCorreo(dto.getCorreo());
         usuarios.setUsuario(dto.getUsuario());
-        usuarios.setContrasena(dto.getContrasena());
+        usuarios.setContrasena(passwordEncoder.encode(dto.getContrasena()));
         usuarios.setFotoPerfil(dto.getFotoPerfil());
 
         Sedes sedes = repoSedes
@@ -109,7 +112,7 @@ public class UsuariosController {
         usuarios.setUsuario(dto.getUsuario());
         String nuevaContrasena = dto.getContrasena();
         if (nuevaContrasena != null && !nuevaContrasena.trim().isEmpty()) {
-            usuarios.setContrasena(nuevaContrasena);
+            usuarios.setContrasena(passwordEncoder.encode(nuevaContrasena));
         } else {
             usuarios.setContrasena(usuarioActual.getContrasena());
         }

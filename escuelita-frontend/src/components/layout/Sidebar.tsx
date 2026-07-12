@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
     BookOpen,
+    Bot,
     Building,
     Building2,
     Calendar,
@@ -105,6 +106,12 @@ const menuModulesConfig: Record<string, { icon: LucideIcon; subItems?: Record<st
             'Deudas de Alumnos': { path: '/escuela/tesoreria/deudas-alumnos', icon: Users },
             'Registrar Pago': { path: '/escuela/tesoreria/pagos', icon: Receipt },
             //'Reportes de Caja': { path: '/escuela/pagos/reportes', icon: TrendingUp },
+        }
+    },
+    'ASISTENTE IA': {
+        icon: Bot,
+        subItems: {
+            'Consultar IA': { path: '/escuela/chatbot', icon: Bot },
         }
     },
 };

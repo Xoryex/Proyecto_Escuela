@@ -20,6 +20,7 @@ import EvaluacionesRoutes from './features/portal/evaluaciones/routes/Evaluacion
 import InfraestructuraRoutes from './features/portal/infraestructura/routes/InfraestructuraRoutes';
 import MatriculasRoutes from './features/portal/matriculas/routes/matriculas.routes';
 import TesoreriaRoutes from './features/portal/tesoreria/routes/TesoreriaRoutes';
+import ChatbotRoutes from './features/portal/chatbot/routes/ChatbotRoutes';
 
 import EscuelaLayout from './layouts/EscuelaLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
@@ -81,6 +82,7 @@ function App() {
           <Route path="academica/*" element={<GestionAcademicaRoutes />} />
           <Route path="evaluaciones/*" element={<EvaluacionesRoutes />} />
           <Route path="tesoreria/*" element={<TesoreriaRoutes />} />
+          <Route path="chatbot/*" element={<ChatbotRoutes />} />
         </Route>
 
         {/* Redirección por defecto */}
