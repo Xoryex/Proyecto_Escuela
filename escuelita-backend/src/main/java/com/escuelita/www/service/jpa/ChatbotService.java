@@ -263,38 +263,66 @@ public class ChatbotService {
 
         if (!esSoloSaludo) {
             String sqlSystemPrompt = "Eres un asistente experto en bases de datos MySQL. Tu única tarea es generar una consulta SQL válida (SELECT, INSERT, UPDATE o DELETE) basada en la estructura de la base de datos y el contexto del usuario provistos.\n"
-                    +
-                    "Reglas obligatorias:\n" +
-                    "1. Tienes permitido realizar consultas de lectura (SELECT) en todas las tablas.\n" +
-                    "2. Tienes permitido realizar consultas de modificación de datos (INSERT, UPDATE, DELETE) ÚNICAMENTE sobre las tablas relacionadas a estudiantes (`alumnos`, `apoderados`, `alumno_apoderado`, `documentos_alumno`), deudas (`deudas_alumno`), matrículas (`matriculas`) y notas/evaluaciones (`evaluaciones`, `calificaciones`, `asistencias`).\n" +
-                    "3. Para cualquier otra tabla (como `usuarios`, `sedes`, `planes`, `suscripciones`, `roles`, etc.), solo tienes permiso de lectura. NO generes INSERT, UPDATE o DELETE sobre ellas.\n" +
-                    "4. NO está permitido modificar la estructura de la base de datos (nada de DROP, ALTER, CREATE, TRUNCATE, etc.).\n" +
-                    "5. Devuelve únicamente el código SQL limpio. NO uses bloques de código de markdown (```sql ... ```), ni explicaciones ni texto introductorio. Solo el código SQL directamente listo para ejecutarse.\n" +
-                    "6. Responde con el SQL exacto para MySQL que responda a la pregunta o instrucción del usuario basándote en las tablas y campos indicados.\n" +
-                    "7. IMPORTANTE: Para relacionar (JOIN) tablas, utiliza únicamente las columnas especificadas en la sección 'Relaciones'. No asumas que una columna existe en una tabla si no está listada en sus 'Columnas' (por ejemplo, no intentes buscar 'id_matricula' en la tabla 'alumnos', ya que no existe).\n" +
-                    "8. IMPORTANTE: NUNCA generes marcadores de posición como '<id_de_tu_sede>' o '[id_sede]'. Reemplázalos por los valores reales indicados en el 'Contexto de sesión del usuario'. Si no conoces el valor de un filtro solicitado y no está en el contexto, no inventes valores y genera la consulta de la forma más general posible sin ese filtro.";
+                    + "Reglas obligatorias:\n"
+                    + "1. Tienes permitido realizar consultas de lectura (SELECT) en todas las tablas.\n"
+                    + "2. Tienes permitido realizar consultas de modificación de datos (INSERT, UPDATE, DELETE) ÚNICAMENTE sobre las tablas: `alumnos`, `apoderados`, `alumno_apoderado`, `documentos_alumno`, `deudas_alumno`, `matriculas`, `evaluaciones`, `calificaciones`, `asistencias`.\n"
+                    + "3. Para cualquier otra tabla, solo tienes permiso de lectura. NO generes INSERT, UPDATE o DELETE sobre ellas.\n"
+                    + "4. NO está permitido modificar la estructura de la base de datos (DROP, ALTER, CREATE, TRUNCATE, etc.).\n"
+                    + "5. Devuelve ÚNICAMENTE el código SQL limpio. PROHIBIDO usar bloques markdown (```sql```), comentarios (--), explicaciones o texto adicional. Solo el SQL listo para ejecutarse.\n"
+                    + "6. IMPORTANTE - REGLAS PARA INSERTS:\n"
+                    + "   a) NUNCA incluyas columnas de clave primaria AUTO_INCREMENT (ej: id_alumno, id_apoderado, id_matricula, id_evaluacion, etc.) — la base de datos las genera sola.\n"
+                    + "   b) SIEMPRE incluye `id_sede` en inserts de tablas que la tengan, usando el valor literal del contexto de sesión (no pongas marcadores).\n"
+                    + "   c) SIEMPRE incluye `estado` con valor 1 (activo) si no fue especificado explícitamente por el usuario.\n"
+                    + "   d) OMITE columnas opcionales que el usuario NO mencionó (ej: foto_url, observaciones, foto, descripcion, token_reset, etc.). No las incluyas ni con NULL.\n"
+                    + "   e) PARSEO DE DATOS DEL USUARIO: El usuario puede enviar datos en el formato '[valor] - [nombre_campo]'. El valor está ANTES del guión y el campo está DESPUÉS. Ejemplo: '76801720 - numero_documento' significa que la columna `numero_documento` recibe el valor `76801720`. Nunca confundas valor con campo.\n"
+                    + "   f) VERIFICACIÓN CRÍTICA ANTES DE RESPONDER: Cuenta las columnas en INSERT INTO tabla(col1,col2,...) y cuenta los valores en VALUES(val1,val2,...). DEBEN ser exactamente el mismo número. Si no coinciden, corrige antes de responder.\n"
+                    + "7. IMPORTANTE: Para JOINs usa solo columnas especificadas en 'Relaciones'. No asumas columnas que no estén listadas.\n"
+                    + "8. IMPORTANTE: NUNCA uses marcadores de posición como '<valor>' o '[campo]'. Usa siempre los valores reales del contexto de sesión.";
 
             String userPromptSqlGen = "Estructura de la base de datos:\n" + esquema + "\n\n" +
                     contextDesc.toString() + "\n" +
                     "Instrucción del usuario: " + pregunta + "\n\n" +
                     "Genera la consulta SQL que responda a esta instrucción.";
 
-            // Generar la consulta SQL
-            sqlGenerada = ollamaClient.generate(sqlSystemPrompt, userPromptSqlGen);
+            // Intentar parsear INSERT directo desde el formato "valor - campo" del usuario
+            String sqlDirecto = construirInsertDesdeFormato(pregunta, sedeId);
+            if (sqlDirecto != null) {
+                sqlGenerada = sqlDirecto;
+                System.out.println("🔧 SQL construida directamente (parser Java): " + sqlGenerada);
+            } else {
+                // Generar la consulta SQL via Ollama
+                sqlGenerada = ollamaClient.generate(sqlSystemPrompt, userPromptSqlGen);
 
-            // Limpiar bloques markdown si la IA los incluyó por error
-            if (sqlGenerada.startsWith("```")) {
-                sqlGenerada = sqlGenerada.replaceAll("^```(sql)?\\s*", "").replaceAll("\\s*```$", "");
+                // Limpiar: extraer SOLO el SQL, ignorando texto introductorio y bloques markdown
+                sqlGenerada = limpiarYExtraerSql(sqlGenerada);
+
+                System.out.println("🤖 SQL Generada por Ollama: " + sqlGenerada);
             }
-            sqlGenerada = sqlGenerada.trim();
 
-            System.out.println("🤖 SQL Generada por Ollama: " + sqlGenerada);
+            if (sqlGenerada.toUpperCase().startsWith("INFO_REQUISITOS:")) {
+                // Consulta informativa de requisitos: no ejecutar SQL
+            } else {
+                try {
+                    // 3. Validar consulta (seguridad)
+                    validarConsultaSql(sqlGenerada);
 
-            // 3. Validar consulta (seguridad)
-            validarConsultaSql(sqlGenerada);
-
-            // 4. Ejecutar consulta en la base de datos (lectura o modificación controlada)
-            resultados = ejecutarConsulta(sqlGenerada);
+                    // 4. Ejecutar consulta en la base de datos (lectura o modificación controlada)
+                    resultados = ejecutarConsulta(sqlGenerada);
+                } catch (IllegalArgumentException e) {
+                    // Error de seguridad/validación: pasar mensaje al formateador
+                    System.err.println("🚨 [Chatbot] Consulta rechazada por seguridad: " + e.getMessage());
+                    Map<String, Object> errorResult = new java.util.HashMap<>();
+                    errorResult.put("error_seguridad", e.getMessage());
+                    resultados.add(errorResult);
+                } catch (Exception e) {
+                    // Error de ejecución SQL: pasar detalle al formateador en lugar de lanzar 500
+                    System.err.println("❌ [Chatbot] Error SQL: " + e.getMessage());
+                    Map<String, Object> errorResult = new java.util.HashMap<>();
+                    errorResult.put("error_sql", e.getMessage());
+                    errorResult.put("sql_intentado", sqlGenerada);
+                    resultados.add(errorResult);
+                }
+            }
         }
 
         // 5. Formatear la respuesta usando Ollama con los resultados obtenidos
@@ -308,7 +336,9 @@ public class ChatbotService {
                 "5. IMPORTANTE: En tu respuesta final al usuario, NUNCA muestres o menciones IDs internos de la base de datos (como id_usuario, id_sede, id_alumno, id_admin, etc.), a menos que el usuario los pida explícitamente. Traduce o presenta la información de manera amigable.\n" +
                 "6. IMPORTANTE: Si la pregunta del usuario es únicamente un saludo (como 'hola', 'saludos', etc.) y no se ejecutó ninguna consulta SQL, responde EXACTAMENTE en el siguiente formato:\n" +
                 "   '¡Hola [Nombre]! ¿Cómo estás? ¿Cuál es tu pregunta?'\n" +
-                "   Reemplazando [Nombre] únicamente por el primer y segundo nombre del usuario (sin apellidos, ej. 'Nayelli Yuley') indicados en 'Primeros nombres del usuario actual'. No agregues ningún otro texto, ni detalles sobre sus apellidos ni estados de datos.";
+                "   Reemplazando [Nombre] únicamente por el primer y segundo nombre del usuario (sin apellidos, ej. 'Nayelli Yuley') indicados en 'Primeros nombres del usuario actual'. No agregues ningún otro texto, ni detalles sobre sus apellidos ni estados de datos.\n" +
+                "7. IMPORTANTE: Si los resultados contienen un campo `error_sql`, significa que la consulta SQL falló. Explícale amigablemente al usuario que hubo un problema al procesar su solicitud y pídele que verifique los datos proporcionados (como el tipo de documento o la sede). NO muestres el SQL ni el error técnico.\n" +
+                "8. IMPORTANTE: Si el usuario solicitó información sobre qué campos se necesitan para registrar en una tabla (es_consulta_requisitos=true), lista los campos OBLIGATORIOS y opcionales en español amigable y pídele que te los proporcione para hacer el registro.";
 
         String userPromptFormat = "Contexto del usuario:\n" + contextDesc.toString() + "\n" +
                 "Pregunta/Instrucción del usuario: " + pregunta + "\n" +
@@ -431,5 +461,214 @@ public class ChatbotService {
             System.err.println("⚠️ [Chatbot] No se pudo obtener el nombre completo del usuario: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Limpia y extrae únicamente la sentencia SQL de la respuesta de Ollama,
+     * descartando texto introductorio/explicativo y bloques markdown.
+     */
+    private String limpiarYExtraerSql(String response) {
+        if (response == null) return "";
+        String clean = response.trim();
+
+        // 1. Si hay un bloque ```sql ... ``` o ``` ... ```, extraer su contenido
+        int startIdx = clean.indexOf("```sql");
+        if (startIdx == -1) startIdx = clean.indexOf("```");
+
+        if (startIdx != -1) {
+            int lineEnd = clean.indexOf("\n", startIdx);
+            if (lineEnd != -1) {
+                int endIdx = clean.indexOf("```", lineEnd);
+                String extracted = (endIdx != -1)
+                    ? clean.substring(lineEnd, endIdx).trim()
+                    : clean.substring(lineEnd).trim();
+                // Si hay múltiples sentencias separadas por ;, tomar solo la primera
+                int firstSemicolon = extracted.indexOf(";");
+                if (firstSemicolon != -1 && !extracted.trim().toUpperCase().startsWith("SELECT")) {
+                    extracted = extracted.substring(0, firstSemicolon + 1).trim();
+                }
+                return extracted;
+            }
+        }
+
+        // 2. Sin bloque markdown: buscar la primera palabra clave SQL en el texto
+        String upper = clean.toUpperCase();
+        int firstSqlKeyword = -1;
+        for (String kw : new String[]{"SELECT ", "INSERT INTO ", "UPDATE ", "DELETE FROM ", "WITH ", "INFO_REQUISITOS:"}) {
+            int idx = upper.indexOf(kw);
+            if (idx != -1 && (firstSqlKeyword == -1 || idx < firstSqlKeyword)) {
+                firstSqlKeyword = idx;
+            }
+        }
+
+        if (firstSqlKeyword != -1) {
+            String sqlPart = clean.substring(firstSqlKeyword).trim();
+            // Cortar en el primer párrafo doble (texto explicativo posterior)
+            int doubleNewline = sqlPart.indexOf("\n\n");
+            if (doubleNewline != -1) {
+                sqlPart = sqlPart.substring(0, doubleNewline).trim();
+            }
+            return sqlPart;
+        }
+
+        return clean;
+    }
+
+    /**
+     * Intenta construir un INSERT SQL directamente desde el mensaje del usuario
+     * cuando los datos vienen en el formato "[valor] - [nombre_campo]".
+     * Retorna el SQL si logra parsearlo, o null si Ollama debe manejarlo.
+     */
+    private String construirInsertDesdeFormato(String pregunta, Long sedeId) {
+        String pl = pregunta.toLowerCase();
+        boolean esInsert = pl.contains("inserta") || pl.contains("insert") ||
+                           pl.contains("registra") || pl.contains("agrega") ||
+                           pl.contains("añade") || pl.contains("ingresa") || pl.contains("nuevo alumno");
+        if (!esInsert) return null;
+
+        String tabla = null;
+        java.util.LinkedHashMap<String, String> aliasMap = new java.util.LinkedHashMap<>();
+
+        if (pl.contains("alumno")) {
+            tabla = "alumnos";
+            aliasMap.put("fecha de nacimiento", "fecha_nacimiento");
+            aliasMap.put("fecha nacimiento", "fecha_nacimiento");
+            aliasMap.put("fecha_nacimiento", "fecha_nacimiento");
+            aliasMap.put("fecha nac", "fecha_nacimiento");
+            aliasMap.put("numero de documento", "numero_documento");
+            aliasMap.put("numero documento", "numero_documento");
+            aliasMap.put("numero_documento", "numero_documento");
+            aliasMap.put("nro documento", "numero_documento");
+            aliasMap.put("número documento", "numero_documento");
+            aliasMap.put("telefono contacto", "telefono_contacto");
+            aliasMap.put("telefono_contacto", "telefono_contacto");
+            aliasMap.put("id tipo doc", "id_tipo_doc");
+            aliasMap.put("tipo de documento", "id_tipo_doc");
+            aliasMap.put("tipo documento", "id_tipo_doc");
+            aliasMap.put("id_tipo_doc", "id_tipo_doc");
+            aliasMap.put("tipo doc", "id_tipo_doc");
+            aliasMap.put("apellidos", "apellidos");
+            aliasMap.put("apellido", "apellidos");
+            aliasMap.put("nombres", "nombres");
+            aliasMap.put("nombre", "nombres");
+            aliasMap.put("telefono", "telefono_contacto");
+            aliasMap.put("dirección", "direccion");
+            aliasMap.put("direccion", "direccion");
+            aliasMap.put("género", "genero");
+            aliasMap.put("genero", "genero");
+        } else if (pl.contains("apoderado")) {
+            tabla = "apoderados";
+            aliasMap.put("tipo de documento", "id_tipo_doc");
+            aliasMap.put("tipo documento", "id_tipo_doc");
+            aliasMap.put("id tipo doc", "id_tipo_doc");
+            aliasMap.put("id_tipo_doc", "id_tipo_doc");
+            aliasMap.put("numero de documento", "numero_documento");
+            aliasMap.put("numero documento", "numero_documento");
+            aliasMap.put("numero_documento", "numero_documento");
+            aliasMap.put("apellidos", "apellidos");
+            aliasMap.put("apellido", "apellidos");
+            aliasMap.put("nombres", "nombres");
+            aliasMap.put("nombre", "nombres");
+            aliasMap.put("telefono", "telefono");
+            aliasMap.put("correo", "correo");
+            aliasMap.put("email", "correo");
+            aliasMap.put("dirección", "direccion");
+            aliasMap.put("direccion", "direccion");
+            aliasMap.put("parentesco", "parentesco");
+            aliasMap.put("género", "genero");
+            aliasMap.put("genero", "genero");
+        } else if (pl.contains("matrícula") || pl.contains("matricula")) {
+            tabla = "matriculas";
+            aliasMap.put("id alumno", "id_alumno");
+            aliasMap.put("id_alumno", "id_alumno");
+            aliasMap.put("año lectivo", "anio_lectivo");
+            aliasMap.put("anio lectivo", "anio_lectivo");
+            aliasMap.put("anio_lectivo", "anio_lectivo");
+            aliasMap.put("id grado", "id_grado");
+            aliasMap.put("grado", "id_grado");
+            aliasMap.put("id seccion", "id_seccion");
+            aliasMap.put("sección", "id_seccion");
+            aliasMap.put("seccion", "id_seccion");
+            aliasMap.put("id nivel", "id_nivel");
+            aliasMap.put("nivel", "id_nivel");
+            aliasMap.put("turno", "turno");
+            aliasMap.put("fecha de matricula", "fecha_matricula");
+            aliasMap.put("fecha matricula", "fecha_matricula");
+            aliasMap.put("fecha_matricula", "fecha_matricula");
+        }
+
+        if (tabla == null) return null;
+
+        // Extraer parte de datos tras el primer ":"
+        String dataPart = pregunta;
+        int colon = pregunta.indexOf(":");
+        if (colon != -1) dataPart = pregunta.substring(colon + 1).trim();
+
+        // Parsear segmentos separados por " - "
+        String[] segments = dataPart.split("\\s+-\\s+");
+        if (segments.length < 2) return null;
+
+        // Ordenar aliases por longitud desc para greedy matching
+        java.util.List<java.util.Map.Entry<String, String>> sortedAliases = new java.util.ArrayList<>(aliasMap.entrySet());
+        sortedAliases.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
+
+        java.util.LinkedHashMap<String, String> parsedData = new java.util.LinkedHashMap<>();
+        String pendingValue = segments[0].trim();
+
+        for (int i = 1; i < segments.length; i++) {
+            String seg = segments[i].trim();
+            String matchedCol = null;
+            String nextValue = "";
+
+            for (java.util.Map.Entry<String, String> entry : sortedAliases) {
+                String alias = entry.getKey();
+                if (seg.toLowerCase().startsWith(alias.toLowerCase())) {
+                    matchedCol = entry.getValue();
+                    nextValue = seg.substring(alias.length()).trim();
+                    break;
+                }
+            }
+
+            if (matchedCol == null) return null; // campo no reconocido → dejar a Ollama
+
+            if (!pendingValue.isEmpty()) {
+                parsedData.put(matchedCol, pendingValue);
+            }
+            pendingValue = nextValue;
+        }
+
+        if (parsedData.isEmpty()) return null;
+
+        // Inyectar campos automáticos
+        if (!parsedData.containsKey("estado")) {
+            parsedData.put("estado", "1");
+        }
+        if (sedeId != null && !parsedData.containsKey("id_sede") && !tabla.equals("apoderados")) {
+            parsedData.put("id_sede", sedeId.toString());
+        }
+
+        // Construir SQL
+        StringBuilder cols = new StringBuilder();
+        StringBuilder vals = new StringBuilder();
+        boolean first = true;
+        for (java.util.Map.Entry<String, String> entry : parsedData.entrySet()) {
+            if (!first) { cols.append(", "); vals.append(", "); }
+            first = false;
+            cols.append(entry.getKey());
+            vals.append(quoteSqlValue(entry.getValue()));
+        }
+
+        return "INSERT INTO " + tabla + " (" + cols + ") VALUES (" + vals + ")";
+    }
+
+    /**
+     * Aplica comillas SQL a un valor según su tipo inferido.
+     */
+    private String quoteSqlValue(String value) {
+        if (value == null || value.equalsIgnoreCase("null")) return "NULL";
+        if (value.matches("^-?\\d+$")) return value;
+        if (value.matches("^-?\\d+\\.\\d+$")) return value;
+        if (value.matches("^\\d{4}-\\d{2}-\\d{2}$")) return "'" + value + "'";
+        return "'" + value.replace("'", "\\'") + "'";
     }
 }
