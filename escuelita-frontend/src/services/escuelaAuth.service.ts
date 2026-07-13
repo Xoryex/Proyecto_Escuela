@@ -46,6 +46,18 @@ class EscuelaAuthService {
     private readonly TOKEN_KEY = 'escuela_token';
     private readonly USER_KEY = 'escuela_user';
 
+    constructor() {
+        this.initFromUrl();
+    }
+
+    private initFromUrl(): void {
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get('token');
+        if (tokenFromUrl && !this.getToken()) {
+            localStorage.setItem(this.TOKEN_KEY, tokenFromUrl);
+        }
+    }
+
     async login(credentials: LoginRequest): Promise<LoginResponse> {
         try {
             const response = await api.post<LoginResponse>('/auth/escuela/login', credentials);

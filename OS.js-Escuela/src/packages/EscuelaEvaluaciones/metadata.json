@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaEvaluaciones",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Evaluaciones"
+  },
+  "description": {
+    "en_EN": "Evaluaciones"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

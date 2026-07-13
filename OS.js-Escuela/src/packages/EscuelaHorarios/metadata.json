@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaHorarios",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Horarios"
+  },
+  "description": {
+    "en_EN": "Horarios"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

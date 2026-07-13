@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaMatriculas",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Matrículas"
+  },
+  "description": {
+    "en_EN": "Matrículas"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

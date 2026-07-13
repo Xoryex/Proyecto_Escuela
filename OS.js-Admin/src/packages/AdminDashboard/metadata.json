@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminDashboard",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Dashboard"
+  },
+  "description": {
+    "en_EN": "Dashboard"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

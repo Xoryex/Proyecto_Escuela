@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaConfiguracion",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Configuración"
+  },
+  "description": {
+    "en_EN": "Configuración"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

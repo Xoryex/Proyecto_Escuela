@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaAsignacionDocente",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Asignación Docente"
+  },
+  "description": {
+    "en_EN": "Asignación Docente"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

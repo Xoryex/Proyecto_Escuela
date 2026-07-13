@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaDocentes",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Docentes"
+  },
+  "description": {
+    "en_EN": "Docentes"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

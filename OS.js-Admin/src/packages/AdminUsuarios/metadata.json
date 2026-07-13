@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminUsuarios",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Usuarios"
+  },
+  "description": {
+    "en_EN": "Usuarios"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

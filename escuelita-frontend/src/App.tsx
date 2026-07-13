@@ -1,4 +1,4 @@
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Navigate, Route, BrowserRouter as Router, Routes, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import PrivateRoute from './components/common/PrivateRoute';
 
@@ -35,13 +35,14 @@ function App() {
       <Toaster position="top-right" />
       <Routes>
         {/* Rutas públicas - Login */}
-        <Route path="/login" element={<Login />} /> {/* Super Admin Login */}
+        <Route path="/admin/login" element={<Login />} /> {/* Super Admin Login */}
+        <Route path="/os/admin/login" element={<Login />} /> {/* Super Admin Login */}
         <Route path="/escuela/login" element={<LoginEscuela />} /> {/* Escuela Login */}
+        <Route path="/os/escuela/login" element={<LoginEscuela />} /> {/* Escuela Login */}
 
         {/* Rutas protegidas - Super Admin */}
         <Route
-          path="/admin"
-          element={
+          path="/admin" element={
             <PrivateRoute>
               <SuperAdminLayout />
             </PrivateRoute>
@@ -65,7 +66,7 @@ function App() {
           path="/escuela"
           element={
             <PrivateRoute>
-              <EscuelaLayout />
+              <EscuelaLayout/>
             </PrivateRoute>
           }
         >
@@ -84,6 +85,43 @@ function App() {
           <Route path="tesoreria/*" element={<TesoreriaRoutes />} />
           <Route path="chatbot/*" element={<ChatbotRoutes />} />
         </Route>
+
+        <Route path='/os/escuela' element={
+          <PrivateRoute>
+            <Outlet />
+          </PrivateRoute>}>
+          <Route path="dashboard" element={<DashboardEscuela />} />
+
+          {/* Módulos del Portal Escuela - Protegidos con ModuloGuard en frontend + @RequireModulo en backend */}
+          <Route path="alumnos/*" element={<AlumnosRoutes />} />
+          <Route path="infraestructura/*" element={<InfraestructuraRoutes />} />
+          <Route path="configuracion/*" element={<ConfiguracionRoutes />} />
+          <Route path="apoderados/*" element={<ApoderadosRoutes />} />
+          <Route path="matriculas/*" element={<MatriculasRoutes />} />
+          <Route path="academica/*" element={<GestionAcademicaRoutes />} />
+          <Route path="evaluaciones/*" element={<EvaluacionesRoutes />} />
+          <Route path="tesoreria/*" element={<TesoreriaRoutes />} />
+          <Route path="chatbot/*" element={<ChatbotRoutes />} />
+        </Route>
+
+        {/* Rutas protegidas - OS Super Admin */}
+        <Route
+          path="/os/admin" element={
+            <PrivateRoute>
+              <Outlet />
+            </PrivateRoute>}>
+          {/* Dashboard por defecto */}
+          <Route path="dashboard" element={<Dashboard />} />
+          
+          {/* Módulos del Backoffice */}
+          <Route path="instituciones/*" element={<InstitucionesRoutes />} />
+          <Route path="roles/*" element={<RolesRoutes />} />
+          <Route path="sedes/*" element={<SedesRoutes />} />
+          <Route path="suscripciones/*" element={<SuscripcionesRoutes />} />
+          <Route path="usuarios/*" element={<UsuariosRoutes />} />
+          <Route path="reportes/*" element={<ReportesRoutes />} />
+        </Route>
+        
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to="/escuela/login" replace />} />

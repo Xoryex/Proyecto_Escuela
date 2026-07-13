@@ -21,8 +21,17 @@ const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await adminAuthService.login(credentials);
-            navigate('/admin');
+            const response = await adminAuthService.login(credentials);
+
+            const user = response.usuario;
+            const token =response.token;
+
+            if (window.location.pathname.startsWith("/os/admin/login")){
+            const userEncoded = encodeURIComponent(JSON.stringify(user));
+                window.location.href = `http://localhost:8001/?token=${token}&user=${userEncoded}`;
+            } else {
+                navigate('/admin/dashboard');
+            }
         } catch (err: any) {
             console.error('Error en login:', err);
             if (err.response) {

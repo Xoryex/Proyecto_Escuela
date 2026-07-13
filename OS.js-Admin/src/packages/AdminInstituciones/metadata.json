@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminInstituciones",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Instituciones"
+  },
+  "description": {
+    "en_EN": "Instituciones"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

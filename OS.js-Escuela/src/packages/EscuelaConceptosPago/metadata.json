@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaConceptosPago",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Conceptos de Pago"
+  },
+  "description": {
+    "en_EN": "Conceptos de Pago"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

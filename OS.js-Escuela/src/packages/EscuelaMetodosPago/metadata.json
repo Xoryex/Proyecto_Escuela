@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaMetodosPago",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Métodos de Pago"
+  },
+  "description": {
+    "en_EN": "Métodos de Pago"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

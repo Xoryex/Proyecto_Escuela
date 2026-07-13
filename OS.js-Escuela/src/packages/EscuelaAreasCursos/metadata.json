@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaAreasCursos",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Áreas y Cursos"
+  },
+  "description": {
+    "en_EN": "Áreas y Cursos"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

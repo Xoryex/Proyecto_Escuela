@@ -1,1 +1,0 @@
-{"version":3,"file":"main.css","mappings":";;;AAAA;EACE;EACA;AACF;AACE;EACE;EACA;EACA;AACJ,C","sources":["webpack://SystemEscuela/./index.scss"],"sourcesContent":[".Window_SystemEscuelaWindow .WindowContent {\n  padding: 0 !important;\n  overflow: hidden;\n\n  iframe {\n    width: 100%;\n    height: 100%;\n    border: none;\n  }\n}\n"],"names":[],"sourceRoot":""}

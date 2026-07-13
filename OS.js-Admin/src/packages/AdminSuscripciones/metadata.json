@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminSuscripciones",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Suscripciones"
+  },
+  "description": {
+    "en_EN": "Suscripciones"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

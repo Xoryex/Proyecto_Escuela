@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaPagos",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Pagos"
+  },
+  "description": {
+    "en_EN": "Pagos"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

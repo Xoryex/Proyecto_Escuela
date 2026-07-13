@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaMallaCurricular",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Malla Curricular"
+  },
+  "description": {
+    "en_EN": "Malla Curricular"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

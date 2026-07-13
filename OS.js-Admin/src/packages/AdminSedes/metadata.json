@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminSedes",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Sedes"
+  },
+  "description": {
+    "en_EN": "Sedes"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

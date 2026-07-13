@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminRoles",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Roles"
+  },
+  "description": {
+    "en_EN": "Roles"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

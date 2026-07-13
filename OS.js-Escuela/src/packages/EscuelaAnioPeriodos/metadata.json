@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaAnioPeriodos",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Año y Periodos"
+  },
+  "description": {
+    "en_EN": "Año y Periodos"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

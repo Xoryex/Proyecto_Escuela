@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaApoderados",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Apoderados"
+  },
+  "description": {
+    "en_EN": "Apoderados"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

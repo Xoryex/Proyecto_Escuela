@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaAlumnos",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Alumnos"
+  },
+  "description": {
+    "en_EN": "Alumnos"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

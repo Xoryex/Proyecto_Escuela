@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "AdminReportes",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Reportes"
+  },
+  "description": {
+    "en_EN": "Reportes"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

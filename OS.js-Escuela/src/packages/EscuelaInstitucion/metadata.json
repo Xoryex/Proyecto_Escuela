@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaInstitucion",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Institución"
+  },
+  "description": {
+    "en_EN": "Institución"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

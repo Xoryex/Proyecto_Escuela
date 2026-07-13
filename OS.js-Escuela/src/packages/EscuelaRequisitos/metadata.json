@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaRequisitos",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Requisitos"
+  },
+  "description": {
+    "en_EN": "Requisitos"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

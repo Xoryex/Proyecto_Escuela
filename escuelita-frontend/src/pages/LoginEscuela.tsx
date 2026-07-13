@@ -21,9 +21,16 @@ const LoginEscuela: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await escuelaAuthService.login(credentials);
-            // Redirigir al portal de escuela
-            navigate('/escuela');
+            const response = await escuelaAuthService.login(credentials);
+            const user = response.usuario;
+            const token = response.token;
+
+            if (window.location.pathname.startsWith('/os/escuela/login')) {
+                const userEncoded = encodeURIComponent(JSON.stringify(user));
+                window.location.href = `http://localhost:8000/?token=${token}&user=${userEncoded}`;
+            } else {
+                navigate('/escuela/dashboard');
+            }
         } catch (err: any) {
             console.error('Error en login:', err);
             if (err.response) {

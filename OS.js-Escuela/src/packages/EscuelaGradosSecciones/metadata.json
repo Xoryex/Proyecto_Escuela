@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaGradosSecciones",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Grados y Aulas"
+  },
+  "description": {
+    "en_EN": "Grados y Aulas"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

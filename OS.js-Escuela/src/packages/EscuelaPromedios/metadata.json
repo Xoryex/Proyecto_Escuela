@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaPromedios",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Promedios"
+  },
+  "description": {
+    "en_EN": "Promedios"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

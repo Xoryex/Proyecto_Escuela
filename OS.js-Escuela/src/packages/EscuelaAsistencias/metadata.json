@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaAsistencias",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Asistencias"
+  },
+  "description": {
+    "en_EN": "Asistencias"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

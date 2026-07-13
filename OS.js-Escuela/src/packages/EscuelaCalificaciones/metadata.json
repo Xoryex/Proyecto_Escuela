@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaCalificaciones",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Calificaciones"
+  },
+  "description": {
+    "en_EN": "Calificaciones"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

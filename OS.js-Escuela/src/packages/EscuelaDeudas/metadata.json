@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaDeudas",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Deudas"
+  },
+  "description": {
+    "en_EN": "Deudas"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}

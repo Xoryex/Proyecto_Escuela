@@ -1,0 +1,17 @@
+{
+  "type": "application",
+  "name": "EscuelaChatbot",
+  "category": "network",
+  "icon": "icon.png",
+  "singleton": true,
+  "title": {
+    "en_EN": "Asistente IA"
+  },
+  "description": {
+    "en_EN": "Asistente IA"
+  },
+  "files": [
+    "main.js",
+    "main.css"
+  ]
+}
