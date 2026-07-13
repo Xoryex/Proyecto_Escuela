@@ -1,1 +1,0 @@
-{"version":3,"sources":["webpack:///./index.scss"],"names":[],"mappings":"AAAA;EACE;EACA;AACF;;AAEA;EACE;EACA;EACA;AACF,C","file":"main.css","sourcesContent":[".WindowContent {\n  padding: 0 !important;\n  overflow: hidden;\n}\n\niframe {\n  width: 100%;\n  height: 100%;\n  border: none;\n}\n"],"sourceRoot":""}

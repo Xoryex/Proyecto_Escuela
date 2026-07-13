@@ -48,13 +48,13 @@ import {
   AuthServiceProvider
 } from '@osjs/client';
 
-import { PanelServiceProvider } from '@osjs/panels';
-import { GUIServiceProvider } from '@osjs/gui';
-import { DialogServiceProvider } from '@osjs/dialogs';
+import {PanelServiceProvider} from '@osjs/panels';
+import {GUIServiceProvider} from '@osjs/gui';
+import {DialogServiceProvider} from '@osjs/dialogs';
 import config from './config.js';
 import './index.scss';
 
-import { escuelaAuthAdapter } from './providers/EscuelaAuthProvider.js';
+import {escuelaAuthAdapter} from './providers/EscuelaAuthProvider.js';
 
 const init = () => {
   var params = new URLSearchParams(window.location.search);
@@ -66,14 +66,14 @@ const init = () => {
       try {
         localStorage.setItem('escuela_token', tokenFromUrl);
         localStorage.setItem('escuela_user', decodeURIComponent(userFromUrl));
-      } catch (e) { }
+      } catch (e) {}
     }
     window.history.replaceState({}, '', window.location.pathname);
   }
 
   var token = localStorage.getItem('escuela_token');
   if (!token) {
-    window.location.href = 'http://localhost:5173/os/escuela/login';
+    window.location.href = 'http://localhost:5173/escuela/login';
     return;
   }
 
@@ -92,8 +92,8 @@ const init = () => {
   osjs.register(DesktopServiceProvider);
   osjs.register(VFSServiceProvider);
   osjs.register(NotificationServiceProvider);
-  osjs.register(SettingsServiceProvider, { before: true });
-  osjs.register(AuthServiceProvider, { before: true, args: { adapter: escuelaAuthAdapter } });
+  osjs.register(SettingsServiceProvider, {before: true});
+  osjs.register(AuthServiceProvider, {before: true, args: {adapter: escuelaAuthAdapter}});
   osjs.register(PanelServiceProvider);
   osjs.register(DialogServiceProvider);
   osjs.register(GUIServiceProvider);
