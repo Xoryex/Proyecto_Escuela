@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.escuelita.www.util.OllamaClient;
+import com.escuelita.www.util.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
@@ -79,7 +80,10 @@ public class ChatbotService {
                 stmt.execute("GRANT SELECT ON `" + dbName + "`.* TO 'escuela_ia_ro'@'127.0.0.1'");
 
                 // Otorgar privilegios de modificación de datos (INSERT, UPDATE, DELETE) en tablas permitidas
-                String[] tablasPermitidas = {"matriculas", "evaluaciones", "calificaciones", "asistencias"};
+                String[] tablasPermitidas = {
+                    "matriculas", "evaluaciones", "calificaciones", "asistencias",
+                    "alumnos", "apoderados", "alumno_apoderado", "deudas_alumno", "documentos_alumno"
+                };
                 for (String tabla : tablasPermitidas) {
                     stmt.execute("GRANT INSERT, UPDATE, DELETE ON `" + dbName + "`.`" + tabla + "` TO 'escuela_ia_ro'@'localhost'");
                     stmt.execute("GRANT INSERT, UPDATE, DELETE ON `" + dbName + "`.`" + tabla + "` TO 'escuela_ia_ro'@'127.0.0.1'");
@@ -205,48 +209,109 @@ public class ChatbotService {
             this.dbSchemaCached = esquema;
         }
 
-        String sqlSystemPrompt = "Eres un asistente experto en bases de datos MySQL. Tu única tarea es generar una consulta SQL válida (SELECT, INSERT, UPDATE o DELETE) basada en la estructura de la base de datos provista.\n"
-                +
-                "Reglas obligatorias:\n" +
-                "1. Tienes permitido realizar consultas de lectura (SELECT) en todas las tablas.\n" +
-                "2. Tienes permitido realizar consultas de modificación de datos (INSERT, UPDATE, DELETE) ÚNICAMENTE sobre las tablas relacionadas a matrículas (`matriculas`) y notas/evaluaciones (`evaluaciones`, `calificaciones`, `asistencias`).\n" +
-                "3. Para cualquier otra tabla (como `usuarios`, `sedes`, `planes`, `suscripciones`, `roles`, etc.), solo tienes permiso de lectura. NO generes INSERT, UPDATE o DELETE sobre ellas.\n" +
-                "4. NO está permitido modificar la estructura de la base de datos (nada de DROP, ALTER, CREATE, TRUNCATE, etc.).\n" +
-                "5. Devuelve únicamente el código SQL limpio. NO uses bloques de código de markdown (```sql ... ```), ni explicaciones ni texto introductorio. Solo el código SQL directamente listo para ejecutarse.\n" +
-                "6. Responde con el SQL exacto para MySQL que responda a la pregunta o instrucción del usuario basándote en las tablas y campos indicados.\n" +
-                "7. IMPORTANTE: Para relacionar (JOIN) tablas, utiliza únicamente las columnas especificadas en la sección 'Relaciones'. No asumas que una columna existe en una tabla si no está listada en sus 'Columnas' (por ejemplo, no intentes buscar 'id_matricula' en la tabla 'alumnos', ya que no existe).";
+        // Obtener contexto del usuario actual
+        Long sedeId = TenantContext.getSedeId();
+        Long userId = TenantContext.getUserId();
+        String userType = TenantContext.getUserType();
+        boolean isSuperAdmin = TenantContext.isSuperAdmin();
 
-        String userPromptSqlGen = "Estructura de la base de datos:\n" + esquema + "\n\n" +
-                "Instrucción del usuario: " + pregunta + "\n\n" +
-                "Genera la consulta SQL que responda a esta instrucción.";
-
-        // Generar la consulta SQL
-        String sqlGenerada = ollamaClient.generate(sqlSystemPrompt, userPromptSqlGen);
-
-        // Limpiar bloques markdown si la IA los incluyó por error
-        if (sqlGenerada.startsWith("```")) {
-            sqlGenerada = sqlGenerada.replaceAll("^```(sql)?\\s*", "").replaceAll("\\s*```$", "");
+        String nombreUsuario = obtenerNombreCompletoUsuario(userId, isSuperAdmin);
+        String primerNombre = "";
+        if (nombreUsuario != null && !nombreUsuario.trim().isEmpty()) {
+            String[] partsName = nombreUsuario.trim().split("\\s+");
+            if (partsName.length >= 2) {
+                primerNombre = partsName[0] + " " + partsName[1];
+            } else if (partsName.length == 1) {
+                primerNombre = partsName[0];
+            }
         }
-        sqlGenerada = sqlGenerada.trim();
 
-        System.out.println("🤖 SQL Generada por Ollama: " + sqlGenerada);
+        StringBuilder contextDesc = new StringBuilder();
+        contextDesc.append("Contexto de sesión del usuario que consulta:\n");
+        if (nombreUsuario != null && !nombreUsuario.trim().isEmpty()) {
+            contextDesc.append("- Nombre completo del usuario actual: ").append(nombreUsuario).append("\n");
+            contextDesc.append("- Primeros nombres del usuario actual: ").append(primerNombre).append("\n");
+        }
+        if (isSuperAdmin) {
+            contextDesc.append("- Rol del usuario: SUPER_ADMIN (tiene acceso a todas las sedes, no filtres por sede por defecto a menos que se especifique una en la pregunta).\n");
+        } else {
+            contextDesc.append("- Rol del usuario: ").append(userType != null ? userType : "ESCUELA").append("\n");
+            if (sedeId != null) {
+                contextDesc.append("- ID de la Sede asignada (id_sede): ").append(sedeId).append(" (Si la pregunta dice 'mi sede', 'mi escuela', 'esta sede', etc., debes usar exactamente el valor literal ").append(sedeId).append(" en tu consulta SQL).\n");
+            }
+        }
+        if (userId != null) {
+            contextDesc.append("- ID del Usuario actual (id_usuario): ").append(userId).append(" (Si la pregunta dice 'mi usuario', 'mis datos', etc., debes usar exactamente el valor literal ").append(userId).append(").\n");
+        }
 
-        // 3. Validar consulta (seguridad)
-        validarConsultaSql(sqlGenerada);
+        // Detectar si es un saludo básico en Java para omitir procesamiento SQL y acelerar la respuesta
+        String prepPregunta = pregunta.trim().toLowerCase().replaceAll("[¡!¿?.,]", "");
+        boolean esSoloSaludo = prepPregunta.equals("hola") 
+                || prepPregunta.equals("hola como estas")
+                || prepPregunta.equals("hola cómo estás")
+                || prepPregunta.equals("buenos dias")
+                || prepPregunta.equals("buenos días")
+                || prepPregunta.equals("buenas tardes")
+                || prepPregunta.equals("buenas noches")
+                || prepPregunta.equals("saludos")
+                || prepPregunta.equals("hey")
+                || prepPregunta.equals("buen dia")
+                || prepPregunta.equals("buen día");
 
-        // 4. Ejecutar consulta en la base de datos (lectura o modificación controlada)
-        List<Map<String, Object>> resultados = ejecutarConsulta(sqlGenerada);
+        String sqlGenerada = "";
+        List<Map<String, Object>> resultados = new ArrayList<>();
+
+        if (!esSoloSaludo) {
+            String sqlSystemPrompt = "Eres un asistente experto en bases de datos MySQL. Tu única tarea es generar una consulta SQL válida (SELECT, INSERT, UPDATE o DELETE) basada en la estructura de la base de datos y el contexto del usuario provistos.\n"
+                    +
+                    "Reglas obligatorias:\n" +
+                    "1. Tienes permitido realizar consultas de lectura (SELECT) en todas las tablas.\n" +
+                    "2. Tienes permitido realizar consultas de modificación de datos (INSERT, UPDATE, DELETE) ÚNICAMENTE sobre las tablas relacionadas a estudiantes (`alumnos`, `apoderados`, `alumno_apoderado`, `documentos_alumno`), deudas (`deudas_alumno`), matrículas (`matriculas`) y notas/evaluaciones (`evaluaciones`, `calificaciones`, `asistencias`).\n" +
+                    "3. Para cualquier otra tabla (como `usuarios`, `sedes`, `planes`, `suscripciones`, `roles`, etc.), solo tienes permiso de lectura. NO generes INSERT, UPDATE o DELETE sobre ellas.\n" +
+                    "4. NO está permitido modificar la estructura de la base de datos (nada de DROP, ALTER, CREATE, TRUNCATE, etc.).\n" +
+                    "5. Devuelve únicamente el código SQL limpio. NO uses bloques de código de markdown (```sql ... ```), ni explicaciones ni texto introductorio. Solo el código SQL directamente listo para ejecutarse.\n" +
+                    "6. Responde con el SQL exacto para MySQL que responda a la pregunta o instrucción del usuario basándote en las tablas y campos indicados.\n" +
+                    "7. IMPORTANTE: Para relacionar (JOIN) tablas, utiliza únicamente las columnas especificadas en la sección 'Relaciones'. No asumas que una columna existe en una tabla si no está listada en sus 'Columnas' (por ejemplo, no intentes buscar 'id_matricula' en la tabla 'alumnos', ya que no existe).\n" +
+                    "8. IMPORTANTE: NUNCA generes marcadores de posición como '<id_de_tu_sede>' o '[id_sede]'. Reemplázalos por los valores reales indicados en el 'Contexto de sesión del usuario'. Si no conoces el valor de un filtro solicitado y no está en el contexto, no inventes valores y genera la consulta de la forma más general posible sin ese filtro.";
+
+            String userPromptSqlGen = "Estructura de la base de datos:\n" + esquema + "\n\n" +
+                    contextDesc.toString() + "\n" +
+                    "Instrucción del usuario: " + pregunta + "\n\n" +
+                    "Genera la consulta SQL que responda a esta instrucción.";
+
+            // Generar la consulta SQL
+            sqlGenerada = ollamaClient.generate(sqlSystemPrompt, userPromptSqlGen);
+
+            // Limpiar bloques markdown si la IA los incluyó por error
+            if (sqlGenerada.startsWith("```")) {
+                sqlGenerada = sqlGenerada.replaceAll("^```(sql)?\\s*", "").replaceAll("\\s*```$", "");
+            }
+            sqlGenerada = sqlGenerada.trim();
+
+            System.out.println("🤖 SQL Generada por Ollama: " + sqlGenerada);
+
+            // 3. Validar consulta (seguridad)
+            validarConsultaSql(sqlGenerada);
+
+            // 4. Ejecutar consulta en la base de datos (lectura o modificación controlada)
+            resultados = ejecutarConsulta(sqlGenerada);
+        }
 
         // 5. Formatear la respuesta usando Ollama con los resultados obtenidos
-        String formatSystemPrompt = "Eres un asistente amigable de una plataforma escolar. Tu tarea es responder a la pregunta o confirmar la acción realizada al usuario en español utilizando los resultados reales obtenidos de la base de datos.\n"
+        String formatSystemPrompt = "Eres un asistente amigable de una plataforma escolar. Tu tarea es responder a la pregunta o confirmar la acción realizada al usuario en español utilizando los resultados reales obtenidos de la base de datos o el contexto provisto.\n"
                 +
                 "Reglas:\n" +
                 "1. Responde de manera clara y concisa.\n" +
-                "2. Si la consulta SQL no devolvió registros, indícalo de manera amable (ej. 'No encontré registros para...').\n" +
+                "2. Si la consulta SQL no devolvió registros (y no es un saludo), indícalo de manera amable (ej. 'No encontré registros para...').\n" +
                 "3. Si fue una inserción, modificación o eliminación exitosa (ej. `operacion_exitosa=true`), confírmale amigablemente al usuario la acción realizada.\n" +
-                "4. No muestres código SQL en tu respuesta final a menos que el usuario lo solicite.";
+                "4. No muestres código SQL en tu respuesta final a menos que el usuario lo solicite.\n" +
+                "5. IMPORTANTE: En tu respuesta final al usuario, NUNCA muestres o menciones IDs internos de la base de datos (como id_usuario, id_sede, id_alumno, id_admin, etc.), a menos que el usuario los pida explícitamente. Traduce o presenta la información de manera amigable.\n" +
+                "6. IMPORTANTE: Si la pregunta del usuario es únicamente un saludo (como 'hola', 'saludos', etc.) y no se ejecutó ninguna consulta SQL, responde EXACTAMENTE en el siguiente formato:\n" +
+                "   '¡Hola [Nombre]! ¿Cómo estás? ¿Cuál es tu pregunta?'\n" +
+                "   Reemplazando [Nombre] únicamente por el primer y segundo nombre del usuario (sin apellidos, ej. 'Nayelli Yuley') indicados en 'Primeros nombres del usuario actual'. No agregues ningún otro texto, ni detalles sobre sus apellidos ni estados de datos.";
 
-        String userPromptFormat = "Pregunta/Instrucción del usuario: " + pregunta + "\n" +
+        String userPromptFormat = "Contexto del usuario:\n" + contextDesc.toString() + "\n" +
+                "Pregunta/Instrucción del usuario: " + pregunta + "\n" +
                 "Consulta SQL ejecutada: " + sqlGenerada + "\n" +
                 "Resultados de la base de datos (formato JSON): " + objectMapper.writeValueAsString(resultados) + "\n\n"
                 +
@@ -339,5 +404,32 @@ public class ChatbotService {
         }
 
         return filas;
+    }
+
+    /**
+     * Obtiene el nombre completo del usuario a partir de su ID y rol.
+     */
+    private String obtenerNombreCompletoUsuario(Long userId, boolean isSuperAdmin) {
+        if (userId == null) {
+            return null;
+        }
+        String sql = isSuperAdmin 
+            ? "SELECT nombres, apellidos FROM super_admins WHERE id_admin = ?" 
+            : "SELECT nombres, apellidos FROM usuarios WHERE id_usuario = ?";
+            
+        try (Connection conn = primaryDataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String nombres = rs.getString("nombres");
+                    String apellidos = rs.getString("apellidos");
+                    return (nombres != null ? nombres.trim() : "") + " " + (apellidos != null ? apellidos.trim() : "");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ [Chatbot] No se pudo obtener el nombre completo del usuario: " + e.getMessage());
+        }
+        return null;
     }
 }
