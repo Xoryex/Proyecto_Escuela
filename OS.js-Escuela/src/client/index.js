@@ -73,7 +73,7 @@ const init = () => {
 
   var token = localStorage.getItem('escuela_token');
   if (!token) {
-    window.location.href = 'http://localhost:5173/escuela/login';
+    window.location.href = 'http://localhost:5173/os/escuela/login';
     return;
   }
 

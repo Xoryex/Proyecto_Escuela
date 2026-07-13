@@ -31,7 +31,15 @@ function escuelaAuthAdapter(core) {
 
     login(values) {
       if (cachedUser) {
-        return Promise.resolve(cachedUser);
+        return fetch('/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username: cachedUser.username || cachedUser.usuario, password: 'osjs-auto'})
+        }).then(function() {
+          return cachedUser;
+        }).catch(function() {
+          return cachedUser;
+        });
       }
 
       return fetch(API_BASE + '/auth/escuela/login', {

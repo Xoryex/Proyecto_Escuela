@@ -1,12 +1,9 @@
-import './index.scss';
 import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 
-var ROUTE = '/os/admin/reportes';
-
 var register = function(core, args, options, metadata) {
   var token = localStorage.getItem('admin_token');
-  var proc = core.make('osjs/application', {args: args, options: options, metadata: metadata});
+  var proc = core.make('osjs/application', {args, options, metadata});
   proc.createWindow({
     id: metadata.name,
     title: metadata.title.en_EN,
@@ -14,10 +11,10 @@ var register = function(core, args, options, metadata) {
     dimension: {width: 1200, height: 750},
     position: {left: 50, top: 50}
   })
-    .on('destroy', function() { proc.destroy(); })
-    .render(function($content) {
+    .on('destroy', () => proc.destroy())
+    .render($content => {
       var iframe = document.createElement('iframe');
-      iframe.src = 'http://localhost:5173' + ROUTE + '?token=' + token;
+      iframe.src = 'http://localhost:5173/os/admin/reportes?token=' + token;
       iframe.style.width = '100%';
       iframe.style.height = '100%';
       iframe.style.border = 'none';

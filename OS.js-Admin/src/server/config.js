@@ -40,5 +40,8 @@ const root = path.resolve(__dirname, '../../');
 module.exports = {
   root,
   port: 8001,
-  public: path.resolve(root, 'dist')
+  public: path.resolve(root, 'dist'),
+  auth: {
+    login: false
+  }
 };

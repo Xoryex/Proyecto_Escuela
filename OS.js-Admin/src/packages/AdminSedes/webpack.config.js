@@ -1,36 +1,12 @@
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-
 const mode = process.env.NODE_ENV || 'development';
 const minimize = mode === 'production';
-
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
-  mode,
-  devtool: 'source-map',
-  entry: path.resolve(__dirname, 'index.js'),
-  externals: { osjs: 'OSjs' },
+  mode, devtool: 'source-map',
+  entry: [path.resolve(__dirname, 'index.js')],
   optimization: { minimize },
-  plugins: [
-    new CopyWebpackPlugin({ patterns: ['icon.png'] }),
-    new MiniCssExtractPlugin({ filename: '[name].css', chunkFilename: '[id].css' })
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.(sa|sc|c)ss$/,
-        exclude: /(node_modules|bower_components)/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          { loader: 'css-loader', options: { sourceMap: true } },
-          { loader: 'sass-loader', options: { sourceMap: true } }
-        ]
-      },
-      {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: { loader: 'babel-loader' }
-      }
-    ]
-  }
+  externals: { osjs: 'OSjs' },
+  plugins: [new CopyWebpackPlugin({ patterns: [{from: 'data', to: 'data'}, 'icon.png'] })],
+  module: { rules: [{ test: /\.js$/, exclude: /(node_modules|bower_components)/, use: { loader: 'babel-loader' } }] }
 };
