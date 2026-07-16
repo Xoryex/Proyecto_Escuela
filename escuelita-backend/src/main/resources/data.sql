@@ -162,35 +162,26 @@ INSERT INTO `areas` (`id_area`, `nombre_area`, `descripcion`, `estado`) VALUES
 (11, 'CIENCIA Y TECNOLOGIA', '', 1),
 (12, 'COMUNICACION', '', 1);
 
--- grados
+-- grados (todos en mayúsculas, sin duplicados por sede)
 INSERT INTO `grados` (`id_grado`, `id_sede`, `nombre_grado`, `estado`) VALUES
 (18, 16, 'PRIMER GRADO', 1),
 (19, 16, 'SEGUNDO GRADO', 1),
 (20, 16, 'TERCER GRADO', 1),
-(21, 17, 'Primer grado', 1),
-(22, 17, 'segundo grado', 1),
+(21, 17, 'PRIMER GRADO', 1),
+(22, 17, 'SEGUNDO GRADO', 1),
 (23, 17, 'TERCER GRADO', 1),
 (24, 17, 'CUARTO GRADO', 1),
-(25, 17, 'quinto grado', 1),
+(25, 17, 'QUINTO GRADO', 1),
 (26, 16, 'CUARTO GRADO', 1),
 (27, 16, 'QUINTO GRADO', 1),
 (28, 16, 'SEXTO GRADO', 1),
-(29, 17, 'sexto grado', 1),
-(30, 17, 'Cuarto Grado', 0),
-(31, 17, 'tercer grado', 0),
-(32, 17, 'azul', 0),
-(33, 16, 'PRIMER GRADO', 1),
-(34, 16, 'SEGUNDO GRADO', 1),
-(35, 16, 'Primer Grado', 1);
+(29, 17, 'SEXTO GRADO', 1);
 
 -- anio_escolar
 INSERT INTO `anio_escolar` (`id_anio_escolar`, `id_sede`, `nombre_anio`, `activo`, `estado`) VALUES
 (6, 16, '2026', 1, 1),
 (7, 17, '2026', 1, 1),
-(8, 17, '2054444444', 1, 0),
-(9, 17, '2027', 0, 1),
-(10, 16, '2026', -2147483648, 1),
-(11, 16, '2026', 1, 1);
+(9, 17, '2027', 0, 1);
 
 -- apoderados
 INSERT INTO `apoderados` (`id_apoderado`, `id_sede`, `id_tipo_doc`, `numero_documento`, `nombres`, `apellidos`, `telefono_principal`, `correo`, `lugar_trabajo`, `estado`) VALUES
@@ -209,15 +200,15 @@ INSERT INTO `alumnos` (`id_alumno`, `id_sede`, `id_tipo_doc`, `numero_documento`
 -- usuarios
 INSERT INTO `usuarios` (`id_usuario`, `id_sede`, `id_rol`, `id_tipo_doc`, `numero_documento`, `apellidos`, `nombres`, `correo`, `usuario`, `contraseña`, `foto_perfil`, `estado`) VALUES
 (1, 16, 1, 1, '76868793', 'YAJAHUANCA FERNANDEZ', 'LUIS ALBERTO', 'luisalbertoyajahuancafernandez@gmail.com', 'luis', '$2a$10$Yd7y60O2ZOxCPmVEowmyZOvUubHoyMYqSnDqhhcMsJBsIwBsypa8i', '', 1),
-(33, 17, 1, 1, '76269185', 'AREVALO ROMERO', 'NAYELLI YULEY', 'ny.arevaloro@unsm.edu.pe', 'Nay', 'admin123', '', 1),
-(34, 16, 1, 1, '77219351', 'CONTRERAS BERNILLA', 'JUDITH MARIANELLA', 'jm.contrerasbe@unsm.edu.pe', 'Mari', 'admin123', '/uploads/logos/04cf002d-114d-44cc-b2cb-ab9cd2d11bbb.jpg', 1),
-(35, 17, 1, 1, '72240942', 'MUÑOZ MOZOMBITE', 'MARTIN', 'm.munozmo@unsm.edu.pe', 'Marki', 'admin123', '', 1),
-(36, 16, 1, 1, '74654276', 'BERRU LOZANO', 'CRISTINA', 'c.berrulo@unsm.edu.pe', 'Cristina', 'admin123', '/uploads/logos/98fcdcb3-8b38-4fcb-90a5-458efbf6a65c.jpg', 1),
-(37, 17, 2, 1, '44551223', 'yajahuanca', 'LUCHO 2', 'luchoyaja@gmail.com', 'profesor1', 'profesor123', NULL, 1),
+(33, 17, 1, 1, '76269185', 'AREVALO ROMERO', 'NAYELLI YULEY', 'ny.arevaloro@unsm.edu.pe', 'Nay', '$2a$10$E4VQfjw38HgZJc3dUQaV6e8nbBSIsL0OdL4.BciCI.Nq8Zl0FI3Ii', '', 1),
+(34, 16, 1, 1, '77219351', 'CONTRERAS BERNILLA', 'JUDITH MARIANELLA', 'jm.contrerasbe@unsm.edu.pe', 'Mari', '$2a$10$E4VQfjw38HgZJc3dUQaV6e8nbBSIsL0OdL4.BciCI.Nq8Zl0FI3Ii', '/uploads/logos/04cf002d-114d-44cc-b2cb-ab9cd2d11bbb.jpg', 1),
+(35, 17, 1, 1, '72240942', 'MUÑOZ MOZOMBITE', 'MARTIN', 'm.munozmo@unsm.edu.pe', 'Marki', '$2a$10$E4VQfjw38HgZJc3dUQaV6e8nbBSIsL0OdL4.BciCI.Nq8Zl0FI3Ii', '', 1),
+(36, 16, 1, 1, '74654276', 'BERRU LOZANO', 'CRISTINA', 'c.berrulo@unsm.edu.pe', 'Cristina', '$2a$10$E4VQfjw38HgZJc3dUQaV6e8nbBSIsL0OdL4.BciCI.Nq8Zl0FI3Ii', '/uploads/logos/98fcdcb3-8b38-4fcb-90a5-458efbf6a65c.jpg', 1),
+(37, 17, 2, 1, '44551223', 'yajahuanca', 'LUCHO 2', 'luchoyaja@gmail.com', 'profesor1', '$2a$10$E4VQfjw38HgZJc3dUQaV6em1pR1Sbzd3ubmpqstvznuMXztG7E.La', NULL, 1),
 (38, 16, 2, 1, '74512698', 'profe', 'pepito', 'pepito@unsm.edu.pe', 'pepito', '$2a$10$p2CuAejpkRJGsolEdYCJOeoNEKjWDxUITejiaXgU6AoUTRRZS0IWW', NULL, 1),
 (39, 17, 2, 1, '45621398', 'Flores', 'Juan', 'juancitoflore@gmail.com', 'juancito', '$2a$10$/8nMMTOpfeKmRCEfm/LCoOeGWYuW47vWO5MFA5C4zROJJkRaXQ3F2', NULL, 1),
 (40, 16, 3, 1, '74654271', 'Raletse', 'Oicapse', 'cristina@gmail.com', 'Pwp', '$2a$10$OAS5jxnq7ieibD4ylFe4vOlIi03oI54lcqPDiH0cGnI/bJmolqS5q', NULL, 1),
-(41, 16, 2, 1, '74522253', 'setooo', 'juan', 'juanceto@gmail.com', 'juancetoo', 'juancetoo123', NULL, 1),
+(41, 16, 2, 1, '74522253', 'setooo', 'juan', 'juanceto@gmail.com', 'juancetoo', '$2a$10$E4VQfjw38HgZJc3dUQaV6ea.sfv2I0tky1lM7tvtySA6fthaOByXa', NULL, 1),
 (42, 17, 2, 1, '44558899', 'Gomez Diaz', 'Carlos Eduardo', 'carlosgomez@gmail.com', 'carlos_profesor', '$2a$10$p2CuAejpkRJGsolEdYCJOeoNEKjWDxUITejiaXgU6AoUTRRZS0IWW', NULL, 1);
 
 -- alumno_apoderado
@@ -252,8 +243,7 @@ INSERT INTO `periodos` (`id_periodo`, `id_anio`, `nombre_periodo`, `fecha_inicio
 (13, 7, 'segundo bimestre', '2026-03-10', '2026-06-17', 0),
 (14, 7, 'primer bimestre', '2026-03-16', '2026-05-29', 1),
 (15, 7, 'segundo bimestre', '2026-06-01', '2026-07-31', 1),
-(16, 7, 'tercer bimestre', '2026-10-01', '2026-11-12', 1),
-(17, 11, 'Primer Bimestre', '2026-03-21', '2026-05-21', 1);
+(16, 7, 'tercer bimestre', '2026-10-01', '2026-11-12', 1);
 
 -- secciones
 INSERT INTO `secciones` (`id_seccion`, `id_grado`, `id_sede`, `nombre_seccion`, `vacantes`, `estado`) VALUES
@@ -264,22 +254,32 @@ INSERT INTO `secciones` (`id_seccion`, `id_grado`, `id_sede`, `nombre_seccion`, 
 (18, 21, 17, 'B', 30, 1),
 (19, 22, 17, 'B', 30, 1),
 (20, 21, 17, 'ROJO', 30, 1),
-(21, 29, 17, 'azul', 30, 1),
+(21, 29, 17, 'AZUL', 30, 1),
 (22, 21, 17, 'C', 30, 1),
-(23, 23, 17, 'verde', 30, 1),
-(24, 33, 16, 'A', 30, 1),
-(25, 33, 16, 'B', 30, 1),
-(26, 35, 16, 'Sección A', 2, 1);
+(23, 23, 17, 'VERDE', 30, 1),
+(24, 18, 16, 'A', 30, 1),
+(25, 18, 16, 'B', 30, 1),
+(26, 18, 16, 'A', 2, 1);
 
 -- asignacion_docente
 INSERT INTO `asignacion_docente` (`id_asignacion`, `id_docente`, `id_seccion`, `id_curso`, `id_anio`, `estado`) VALUES
 (6, 4, 14, 4, 6, 1),
 (7, 4, 14, 5, 6, 1),
-(8, 6, 24, 4, 10, 1),
+(8, 6, 24, 4, 6, 1),
 (9, 5, 15, 4, 6, 1),
 (10, 5, 15, 5, 6, 1),
 (11, 8, 17, 4, 7, 1),
-(12, 8, 17, 8, 7, 1);
+(12, 8, 17, 8, 7, 1),
+(13, 4, 14, 6, 6, 1),
+(14, 4, 14, 7, 6, 1),
+(15, 4, 14, 8, 6, 1),
+(16, 4, 14, 9, 6, 1),
+(17, 7, 14, 4, 6, 1),
+(18, 7, 14, 5, 6, 1),
+(19, 7, 14, 6, 6, 1),
+(20, 8, 17, 5, 7, 1),
+(21, 8, 17, 6, 7, 1),
+(22, 8, 17, 7, 7, 1);
 
 -- matriculas
 INSERT INTO `matriculas` (`id_matricula`, `id_alumno`, `id_seccion`, `id_anio`, `codigo_matricula`, `fecha_matricula`, `estado_matricula`, `estado`, `fecha_pago_matricula`, `fecha_vencimiento_pago`, `observaciones`, `tipo_ingreso`, `vacante_garantizada`) VALUES

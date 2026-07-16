@@ -100,6 +100,7 @@ const AsignacionDocentePage: React.FC = () => {
                 api.get(API_ENDPOINTS.CURSOS),
                 api.get(API_ENDPOINTS.ANIO_ESCOLAR),
             ]);
+            console.log('[DEBUG] API AsignacionDocente response:', JSON.stringify(resAsig.data, null, 2));
             setAsignaciones(Array.isArray(resAsig.data) ? resAsig.data : []);
             setDocentes(Array.isArray(resDocentes.data) ? resDocentes.data : []);
             setSecciones(Array.isArray(resSecciones.data) ? resSecciones.data : []);

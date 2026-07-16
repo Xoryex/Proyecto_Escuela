@@ -45,17 +45,18 @@ const SeccionForm: React.FC<SeccionFormProps> = ({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        const newValue = name === 'nombreSeccion' ? value.toUpperCase() : value;
         setFormData(prev => ({ 
             ...prev, 
-            [name]: name === 'vacantes' || name === 'idGrado' || name === 'idSede' ? Number(value) : value 
+            [name]: name === 'vacantes' || name === 'idGrado' || name === 'idSede' ? Number(newValue) : newValue 
         }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Asegurar que siempre se envíe la sede del usuario actual
         const dataToSubmit = {
             ...formData,
+            nombreSeccion: formData.nombreSeccion.trim(),
             idSede: sedeId || formData.idSede
         };
         await onSubmit(dataToSubmit);

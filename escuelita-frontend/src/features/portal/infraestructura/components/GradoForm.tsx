@@ -10,6 +10,15 @@ interface GradoFormProps {
     isLoading?: boolean;
 }
 
+const GRADOS_FIJOS = [
+    'PRIMER GRADO',
+    'SEGUNDO GRADO',
+    'TERCER GRADO',
+    'CUARTO GRADO',
+    'QUINTO GRADO',
+    'SEXTO GRADO',
+];
+
 const GradoForm: React.FC<GradoFormProps> = ({ 
     grado, 
     onSubmit, 
@@ -17,18 +26,9 @@ const GradoForm: React.FC<GradoFormProps> = ({
     isLoading = false
 }) => {
     const sedeId = escuelaAuthService.getSedeId();
-    
-    const GRADOS_PRIMARIA = [
-        'Primer Grado',
-        'Segundo Grado',
-        'Tercer Grado',
-        'Cuarto Grado',
-        'Quinto Grado',
-        'Sexto Grado',
-    ];
 
     const [formData, setFormData] = useState<GradoDTO>({
-        nombreGrado: grado ? '' : GRADOS_PRIMARIA[0],
+        nombreGrado: GRADOS_FIJOS[0],
         idSede: sedeId || 0
     });
 
@@ -49,7 +49,6 @@ const GradoForm: React.FC<GradoFormProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Asegurar que siempre se envíe la sede del usuario actual
         const dataToSubmit = {
             ...formData,
             idSede: sedeId || formData.idSede
@@ -60,7 +59,6 @@ const GradoForm: React.FC<GradoFormProps> = ({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
                 <div className="bg-gradient-to-r from-escuela-light to-escuela-dark p-6 text-white flex justify-between items-center flex-shrink-0">
                     <h2 className="text-xl font-bold flex items-center gap-3">
                         <span className="w-1 h-6 bg-white/70 rounded-full flex-shrink-0"></span>
@@ -76,7 +74,6 @@ const GradoForm: React.FC<GradoFormProps> = ({
                     </button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -89,13 +86,12 @@ const GradoForm: React.FC<GradoFormProps> = ({
                             required
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-escuela focus:border-transparent"
                         >
-                            {GRADOS_PRIMARIA.map(g => (
+                            {GRADOS_FIJOS.map(g => (
                                 <option key={g} value={g}>{g}</option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Botones */}
                     <div className="flex justify-end space-x-3 pt-2">
                         <button
                             type="button"

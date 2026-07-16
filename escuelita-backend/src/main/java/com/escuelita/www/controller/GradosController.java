@@ -38,35 +38,43 @@ public class GradosController {
     @PostMapping("/grados")
     @RequireModulo(3)  // 3 = Módulo INFRAESTRUCTURA
     public ResponseEntity<?> guardar(@RequestBody GradosDTO dto) {
-        Grados grados = new Grados();
-        grados.setNombreGrado(dto.getNombreGrado());
+        try {
+            Grados grados = new Grados();
+            grados.setNombreGrado(dto.getNombreGrado());
 
-        Sedes sedes = repoSedes
-            .findById(dto.getIdSede())
-            .orElse(null);
-        
-        grados.setIdSede(sedes);
+            Sedes sedes = repoSedes
+                .findById(dto.getIdSede())
+                .orElse(null);
+            
+            grados.setIdSede(sedes);
 
-        return ResponseEntity.ok(serviceGrados.guardar(grados));
+            return ResponseEntity.ok(serviceGrados.guardar(grados));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
     }
     @PutMapping("/grados")
     @RequireModulo(3)  // 3 = Módulo INFRAESTRUCTURA
     public ResponseEntity<?> modificar(@RequestBody GradosDTO dto) {
-        if(dto.getIdGrado() == null){
-            return ResponseEntity.badRequest()
-                    .body("ID de grado es requerido");
+        try {
+            if(dto.getIdGrado() == null){
+                return ResponseEntity.badRequest()
+                        .body("ID de grado es requerido");
+            }
+            Grados grados = new Grados();
+            grados.setIdGrado(dto.getIdGrado());
+            grados.setNombreGrado(dto.getNombreGrado());
+
+            Sedes sedes = repoSedes
+                .findById(dto.getIdSede())
+                .orElse(null);
+
+            grados.setIdSede(sedes);
+
+            return ResponseEntity.ok(serviceGrados.modificar(grados));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         }
-        Grados grados = new Grados();
-        grados.setIdGrado(dto.getIdGrado());
-        grados.setNombreGrado(dto.getNombreGrado());
-
-        Sedes sedes = repoSedes
-            .findById(dto.getIdSede())
-            .orElse(null);
-
-        grados.setIdSede(sedes);
-
-        return ResponseEntity.ok(serviceGrados.modificar(grados));
     }
     @GetMapping("/grados/{id}")
     public Optional<Grados> buscarId(@PathVariable("id") Long id){

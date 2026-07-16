@@ -29,6 +29,12 @@ public class GradosService implements IGradosService{
         SedeAccessHelper.validateSedeAccess(
             () -> grados.getIdSede() != null ? grados.getIdSede().getIdSede() : null
         );
+        grados.setNombreGrado(grados.getNombreGrado().toUpperCase().trim());
+        Long sedeId = grados.getIdSede() != null ? grados.getIdSede().getIdSede() : null;
+        if (sedeId != null) {
+            repoGrados.findByNombreGradoAndIdSedeIdSede(grados.getNombreGrado(), sedeId)
+                .ifPresent(g -> { throw new IllegalArgumentException("Ya existe el grado '" + grados.getNombreGrado() + "' en esta sede"); });
+        }
         return repoGrados.save(grados);
     }
     
@@ -37,6 +43,13 @@ public class GradosService implements IGradosService{
         SedeAccessHelper.validateSedeAccess(
             () -> grados.getIdSede() != null ? grados.getIdSede().getIdSede() : null
         );
+        grados.setNombreGrado(grados.getNombreGrado().toUpperCase().trim());
+        Long sedeId = grados.getIdSede() != null ? grados.getIdSede().getIdSede() : null;
+        if (sedeId != null && grados.getIdGrado() != null) {
+            repoGrados.findByNombreGradoAndIdSedeIdSede(grados.getNombreGrado(), sedeId)
+                .filter(g -> !g.getIdGrado().equals(grados.getIdGrado()))
+                .ifPresent(g -> { throw new IllegalArgumentException("Ya existe el grado '" + grados.getNombreGrado() + "' en esta sede"); });
+        }
         return repoGrados.save(grados);
     }
     
