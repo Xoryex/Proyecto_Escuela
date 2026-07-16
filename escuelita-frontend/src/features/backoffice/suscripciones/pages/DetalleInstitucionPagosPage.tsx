@@ -8,6 +8,7 @@ import { useInstituciones } from '../../instituciones/hooks/useInstituciones';
 import { getPagosPorSuscripcionApi } from '../api/pagosSuscripcionApi';
 import ComprobantePagoModal from '../components/ComprobantePagoModal';
 import PagoSuscripcionForm from '../components/PagoSuscripcionForm';
+import VerificarPagoModal from '../components/VerificarPagoModal';
 import { usePagosSuscripcion } from '../hooks/usePagosSuscripcion';
 import { useSuscripciones } from '../hooks/useSuscripciones';
 import type { EstadoVerificacion, PagoSuscripcion, PagoSuscripcionFormData } from '../types';
@@ -22,12 +23,15 @@ const DetalleInstitucionPagosPage: React.FC = () => {
     const { suscripciones, metodosPago } = useSuscripciones();
     const {
         registrar,
-        actualizarPagoProgramado
+        actualizarPagoProgramado,
+        verificar,
+        rechazar
     } = usePagosSuscripcion();
 
     const [pagosSuscripcion, setPagosSuscripcion] = useState<PagoSuscripcion[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [pagoParaRegistrar, setPagoParaRegistrar] = useState<PagoSuscripcion | null>(null);
+    const [pagoParaVerificar, setPagoParaVerificar] = useState<PagoSuscripcion | null>(null);
     const [pagoParaVerBoleta, setPagoParaVerBoleta] = useState<PagoSuscripcion | null>(null);
     const [mostrarFormularioNuevoPago, setMostrarFormularioNuevoPago] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -128,51 +132,43 @@ const DetalleInstitucionPagosPage: React.FC = () => {
         }
     };
 
-    // const _handleVerificar = async (idPago: number) => {
-    //     try {
-    //         const idSuperAdmin = getSuperAdminId();
-    //         await verificar(idPago, idSuperAdmin);
-    //         
-    //         // Recargar los pagos
-    //         if (suscripcion) {
-    //             const pagos = await getPagosPorSuscripcionApi(suscripcion.idSuscripcion);
-    //             const pagosOrdenados = pagos.sort((a, b) => {
-    //                 const fechaA = a.fechaPago ? new Date(a.fechaPago).getTime() : 0;
-    //                 const fechaB = b.fechaPago ? new Date(b.fechaPago).getTime() : 0;
-    //                 return fechaA - fechaB;
-    //             });
-    //             setPagosSuscripcion(pagosOrdenados);
-    //         }
-    //         
-    //         toast.success('✅ Pago verificado exitosamente');
-    //         setSelectedPago(null);
-    //     } catch (error) {
-    //         toast.error('❌ Error al verificar el pago');
-    //     }
-    // };
+    const handleVerificar = async (idPago: number) => {
+        try {
+            const idSuperAdmin = getSuperAdminId();
+            await verificar(idPago, idSuperAdmin);
+            if (suscripcion) {
+                const pagos = await getPagosPorSuscripcionApi(suscripcion.idSuscripcion);
+                const pagosOrdenados = pagos.sort((a, b) => {
+                    const fechaA = a.fechaPago ? new Date(a.fechaPago).getTime() : 0;
+                    const fechaB = b.fechaPago ? new Date(b.fechaPago).getTime() : 0;
+                    return fechaA - fechaB;
+                });
+                setPagosSuscripcion(pagosOrdenados);
+            }
+            setPagoParaVerificar(null);
+        } catch (error) {
+            console.error('Error al verificar el pago:', error);
+        }
+    };
 
-    // const _handleRechazar = async (idPago: number, motivo: string) => {
-    //     try {
-    //         const idSuperAdmin = getSuperAdminId();
-    //         await rechazar(idPago, motivo, idSuperAdmin);
-    //         
-    //         // Recargar los pagos
-    //         if (suscripcion) {
-    //             const pagos = await getPagosPorSuscripcionApi(suscripcion.idSuscripcion);
-    //             const pagosOrdenados = pagos.sort((a, b) => {
-    //                 const fechaA = a.fechaPago ? new Date(a.fechaPago).getTime() : 0;
-    //                 const fechaB = b.fechaPago ? new Date(b.fechaPago).getTime() : 0;
-    //                 return fechaA - fechaB;
-    //             });
-    //             setPagosSuscripcion(pagosOrdenados);
-    //         }
-    //         
-    //         toast.success('⚠️ Pago rechazado');
-    //         setSelectedPago(null);
-    //     } catch (error) {
-    //         toast.error('❌ Error al rechazar el pago');
-    //     }
-    // };
+    const handleRechazar = async (idPago: number, motivo: string) => {
+        try {
+            const idSuperAdmin = getSuperAdminId();
+            await rechazar(idPago, motivo, idSuperAdmin);
+            if (suscripcion) {
+                const pagos = await getPagosPorSuscripcionApi(suscripcion.idSuscripcion);
+                const pagosOrdenados = pagos.sort((a, b) => {
+                    const fechaA = a.fechaPago ? new Date(a.fechaPago).getTime() : 0;
+                    const fechaB = b.fechaPago ? new Date(b.fechaPago).getTime() : 0;
+                    return fechaA - fechaB;
+                });
+                setPagosSuscripcion(pagosOrdenados);
+            }
+            setPagoParaVerificar(null);
+        } catch (error) {
+            console.error('Error al rechazar el pago:', error);
+        }
+    };
 
     const getEstadoBadge = (estado: EstadoVerificacion) => {
         const badges = {
@@ -411,6 +407,15 @@ const DetalleInstitucionPagosPage: React.FC = () => {
                                                             <FileText className="w-4 h-4" />
                                                         </button>
                                                     )}
+                                                    {pago.comprobanteUrl && pago.estadoVerificacion === 'PENDIENTE' && (
+                                                        <button
+                                                            onClick={() => setPagoParaVerificar(pago)}
+                                                            className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                            title="Verificar Pago"
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     {pago.comprobanteUrl && (
                                                         <button
                                                             onClick={() => handleVerComprobante(pago)}
@@ -476,6 +481,16 @@ const DetalleInstitucionPagosPage: React.FC = () => {
                     metodosPago={metodosPago}
                     onClose={() => setMostrarFormularioNuevoPago(false)}
                     onSubmit={handleGuardarRegistro}
+                />
+            )}
+
+            {/* Modal de Verificación */}
+            {pagoParaVerificar && (
+                <VerificarPagoModal
+                    pago={pagoParaVerificar}
+                    onVerificar={handleVerificar}
+                    onRechazar={handleRechazar}
+                    onClose={() => setPagoParaVerificar(null)}
                 />
             )}
 

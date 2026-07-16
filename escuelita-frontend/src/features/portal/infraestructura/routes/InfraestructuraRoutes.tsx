@@ -4,6 +4,7 @@ import { escuelaAuthService } from '../../../../services/escuelaAuth.service';
 import AnioEscolarPeriodosPage from '../pages/AnioEscolarPeriodosPage';
 import GradosSeccionesAulasPage from '../pages/GradosSeccionesAulasPage';
 import InstitucionPage from '../pages/InstitucionPage';
+import SedesPage from '../pages/SedesPage';
 
 const InfraestructuraRoutes = () => {
     const currentUser = escuelaAuthService.getCurrentUser();
@@ -18,6 +19,7 @@ const InfraestructuraRoutes = () => {
                 <Route index element={<Navigate to="institucion" replace />} />
 
                 <Route path="institucion" element={<InstitucionPage />} />
+                <Route path="sedes" element={<SedesPage />} />
                 <Route path="anio-periodos" element={<AnioEscolarPeriodosPage />} />
                 <Route path="grados-secciones" element={<GradosSeccionesAulasPage />} />
 

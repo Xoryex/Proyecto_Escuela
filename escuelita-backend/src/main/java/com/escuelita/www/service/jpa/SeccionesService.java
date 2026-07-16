@@ -29,6 +29,7 @@ public class SeccionesService implements ISeccionesService{
         SedeAccessHelper.validateSedeAccess(
             () -> secciones.getIdSede() != null ? secciones.getIdSede().getIdSede() : null
         );
+        secciones.setNombreSeccion(secciones.getNombreSeccion().toUpperCase().trim());
         return repoSecciones.save(secciones);
     }
     
@@ -37,6 +38,7 @@ public class SeccionesService implements ISeccionesService{
         SedeAccessHelper.validateSedeAccess(
             () -> secciones.getIdSede() != null ? secciones.getIdSede().getIdSede() : null
         );
+        secciones.setNombreSeccion(secciones.getNombreSeccion().toUpperCase().trim());
         return repoSecciones.save(secciones);
     }
     

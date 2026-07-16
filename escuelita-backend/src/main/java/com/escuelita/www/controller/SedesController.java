@@ -57,12 +57,10 @@ public class SedesController {
     @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public ResponseEntity<?> guardar(@RequestBody SedesDTO dto) {
         try {
-            // Obtener la institución
             Institucion institucion = repoInstitucion
                 .findById(dto.getIdInstitucion())
                 .orElseThrow(() -> new Exception("Institución no encontrada"));
             
-            // Validar que exista una suscripción activa
             Optional<Suscripciones> suscripcionOpt = repoSuscripciones
                 .findSuscripcionActivaByInstitucionId(dto.getIdInstitucion());
             
@@ -73,10 +71,8 @@ public class SedesController {
             
             Suscripciones suscripcion = suscripcionOpt.get();
             
-            // Contar cuántas sedes activas tiene la institución
             Long sedesActuales = repoSedes.countSedesActivasByInstitucionId(dto.getIdInstitucion());
             
-            // Validar que no se exceda el límite
             if (sedesActuales >= suscripcion.getLimiteSedesContratadas()) {
                 return ResponseEntity.badRequest()
                     .body("Ha alcanzado el límite de sedes permitidas (" + 
@@ -84,11 +80,10 @@ public class SedesController {
                         "). Contacte al administrador para ampliar su suscripción.");
             }
             
-            // Crear la sede
             Sedes sedes = new Sedes();
             sedes.setNombreSede(dto.getNombreSede());
-            sedes.setCodigoEstablecimiento(dto.getCodigoEstablecimiento());
-            sedes.setEsSedePrincipal(dto.getEsSedePrincipal());
+            sedes.setCodigoEstablecimiento(dto.getCodigoEstablecimiento() != null ? dto.getCodigoEstablecimiento() : "0000");
+            sedes.setEsSedePrincipal(dto.getEsSedePrincipal() != null ? dto.getEsSedePrincipal() : false);
             sedes.setDireccion(dto.getDireccion());
             sedes.setDistrito(dto.getDistrito());
             sedes.setProvincia(dto.getProvincia());
@@ -99,6 +94,8 @@ public class SedesController {
             sedes.setIdInstitucion(institucion);
 
             return ResponseEntity.ok(serviceSedes.guardar(sedes));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body("Error al crear sede: " + e.getMessage());
@@ -107,30 +104,34 @@ public class SedesController {
     @PutMapping("/sedes")
     @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public ResponseEntity<?> modificar(@RequestBody SedesDTO dto) {
-        if(dto.getIdSede() == null){
-            return ResponseEntity.badRequest()
-                    .body("ID de sede es requerido");
+        try {
+            if(dto.getIdSede() == null){
+                return ResponseEntity.badRequest()
+                        .body("ID de sede es requerido");
+            }
+            Sedes sedes = new Sedes();
+            sedes.setIdSede(dto.getIdSede());
+            sedes.setNombreSede(dto.getNombreSede());
+            sedes.setCodigoEstablecimiento(dto.getCodigoEstablecimiento() != null ? dto.getCodigoEstablecimiento() : "0000");
+            sedes.setEsSedePrincipal(dto.getEsSedePrincipal() != null ? dto.getEsSedePrincipal() : false);
+            sedes.setDireccion(dto.getDireccion());
+            sedes.setDistrito(dto.getDistrito());
+            sedes.setProvincia(dto.getProvincia());
+            sedes.setDepartamento(dto.getDepartamento());
+            sedes.setUgel(dto.getUgel());
+            sedes.setTelefono(dto.getTelefono());
+            sedes.setCorreoInstitucional(dto.getCorreoInstitucional());
+
+            Institucion institucion = repoInstitucion
+                .findById(dto.getIdInstitucion())
+                .orElse(null);
+
+            sedes.setIdInstitucion(institucion);
+
+            return ResponseEntity.ok(serviceSedes.modificar(sedes));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         }
-        Sedes sedes = new Sedes();
-        sedes.setIdSede(dto.getIdSede());
-        sedes.setNombreSede(dto.getNombreSede());
-        sedes.setCodigoEstablecimiento(dto.getCodigoEstablecimiento());
-        sedes.setEsSedePrincipal(dto.getEsSedePrincipal());
-        sedes.setDireccion(dto.getDireccion());
-        sedes.setDistrito(dto.getDistrito());
-        sedes.setProvincia(dto.getProvincia());
-        sedes.setDepartamento(dto.getDepartamento());
-        sedes.setUgel(dto.getUgel());
-        sedes.setTelefono(dto.getTelefono());
-        sedes.setCorreoInstitucional(dto.getCorreoInstitucional());
-
-        Institucion institucion = repoInstitucion
-            .findById(dto.getIdInstitucion())
-            .orElse(null);
-
-        sedes.setIdInstitucion(institucion);
-
-        return ResponseEntity.ok(serviceSedes.modificar(sedes));
     }
     @GetMapping("/sedes/{id}")
     @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN

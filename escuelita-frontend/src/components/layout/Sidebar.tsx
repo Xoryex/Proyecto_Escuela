@@ -61,6 +61,7 @@ const menuModulesConfig: Record<string, { icon: LucideIcon; subItems?: Record<st
         icon: Building2,
         subItems: {
             'Institución': { path: '/escuela/infraestructura/institucion', icon: Building },
+            'Sedes': { path: '/escuela/infraestructura/sedes', icon: Building2 },
             'Año y Periodos': { path: '/escuela/infraestructura/anio-periodos', icon: Calendar },
             'Grados, Secciones y Aulas': { path: '/escuela/infraestructura/grados-secciones', icon: Layers },
         }

@@ -224,8 +224,11 @@ const AsistenciasPage: React.FC = () => {
                       const seccionNombre = typeof asignaciones[0].idSeccion === 'object' 
                         ? asignaciones[0].idSeccion.nombreSeccion 
                         : `Sección ${asignaciones[0].idSeccion}`;
-                      
-                      return `${asignaciones[0].nombreCurso} (${asignaciones[0].nombreArea}) - ${seccionNombre}`;
+                      const cursoData = typeof asignaciones[0].idCurso === 'object' ? asignaciones[0].idCurso : null;
+                      const nomCurso = cursoData?.nombreCurso ?? cursoData?.nombre ?? 'Desconocido';
+                      const areaData = typeof (cursoData as any)?.idArea === 'object' ? (cursoData as any).idArea : null;
+                      const nomArea = areaData?.nombreArea ?? areaData?.nombre ?? 'Sin área';
+                      return `${nomCurso} (${nomArea}) - ${seccionNombre}`;
                     })()}
                   </span>
                 )}
@@ -245,10 +248,13 @@ const AsistenciasPage: React.FC = () => {
                   ).values()
                 ).map((asig) => {
                   const seccion = typeof asig.idSeccion === 'object' ? asig.idSeccion.nombreSeccion : `Sección ${asig.idSeccion}`;
-                  
+                  const cursoData = typeof asig.idCurso === 'object' ? asig.idCurso : null;
+                  const nomCurso = cursoData?.nombreCurso ?? cursoData?.nombre ?? 'Desconocido';
+                  const areaData = typeof (cursoData as any)?.idArea === 'object' ? (cursoData as any).idArea : null;
+                  const nomArea = areaData?.nombreArea ?? areaData?.nombre ?? 'Sin área';
                   return (
                     <option key={asig.idAsignacion} value={asig.idAsignacion}>
-                      {`${asig.nombreCurso} (${asig.nombreArea}) - ${seccion}`}
+                      {`${nomCurso} (${nomArea}) - ${seccion}`}
                     </option>
                   );
                 })}
@@ -360,7 +366,7 @@ const AsistenciasPage: React.FC = () => {
                           name={`asistencia-${index}`}
                           checked={mat.estadoAsistencia === 'Presente'}
                           onChange={() => handleEstadoChange(index, 'Presente')}
-                          className="w-5 h-5 cursor-pointer accent-green-500"
+                          className={`w-5 h-5 cursor-pointer accent-green-500 ${mat.estadoAsistencia === 'Presente' ? 'ring-2 ring-green-500 ring-offset-1' : ''}`}
                         />
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -369,7 +375,7 @@ const AsistenciasPage: React.FC = () => {
                           name={`asistencia-${index}`}
                           checked={mat.estadoAsistencia === 'Falta'}
                           onChange={() => handleEstadoChange(index, 'Falta')}
-                          className="w-5 h-5 cursor-pointer accent-red-500"
+                          className={`w-5 h-5 cursor-pointer accent-red-500 ${mat.estadoAsistencia === 'Falta' ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
                         />
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -378,7 +384,7 @@ const AsistenciasPage: React.FC = () => {
                           name={`asistencia-${index}`}
                           checked={mat.estadoAsistencia === 'Tardanza'}
                           onChange={() => handleEstadoChange(index, 'Tardanza')}
-                          className="w-5 h-5 cursor-pointer accent-yellow-500"
+                          className={`w-5 h-5 cursor-pointer accent-yellow-500 ${mat.estadoAsistencia === 'Tardanza' ? 'ring-2 ring-yellow-500 ring-offset-1' : ''}`}
                         />
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -387,7 +393,7 @@ const AsistenciasPage: React.FC = () => {
                           name={`asistencia-${index}`}
                           checked={mat.estadoAsistencia === 'Justificado'}
                           onChange={() => handleEstadoChange(index, 'Justificado')}
-                          className="w-5 h-5 cursor-pointer accent-purple-500"
+                          className={`w-5 h-5 cursor-pointer accent-purple-500 ${mat.estadoAsistencia === 'Justificado' ? 'ring-2 ring-purple-500 ring-offset-1' : ''}`}
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -445,7 +451,7 @@ const AsistenciasPage: React.FC = () => {
                         name={`asistencia-${index}`}
                         checked={mat.estadoAsistencia === 'Presente'}
                         onChange={() => handleEstadoChange(index, 'Presente')}
-                        className="w-4 h-4 cursor-pointer accent-green-500"
+                        className={`w-4 h-4 cursor-pointer accent-green-500 ${mat.estadoAsistencia === 'Presente' ? 'ring-2 ring-green-500 ring-offset-1' : ''}`}
                       />
                       <label className="flex items-center space-x-1 text-sm text-gray-700 cursor-pointer flex-1">
                         <CheckCircle className="w-4 h-4 text-green-500" />
@@ -458,7 +464,7 @@ const AsistenciasPage: React.FC = () => {
                         name={`asistencia-${index}`}
                         checked={mat.estadoAsistencia === 'Falta'}
                         onChange={() => handleEstadoChange(index, 'Falta')}
-                        className="w-4 h-4 cursor-pointer accent-red-500"
+                        className={`w-4 h-4 cursor-pointer accent-red-500 ${mat.estadoAsistencia === 'Falta' ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
                       />
                       <label className="flex items-center space-x-1 text-sm text-gray-700 cursor-pointer flex-1">
                         <XCircle className="w-4 h-4 text-red-500" />
@@ -471,7 +477,7 @@ const AsistenciasPage: React.FC = () => {
                         name={`asistencia-${index}`}
                         checked={mat.estadoAsistencia === 'Tardanza'}
                         onChange={() => handleEstadoChange(index, 'Tardanza')}
-                        className="w-4 h-4 cursor-pointer accent-yellow-500"
+                        className={`w-4 h-4 cursor-pointer accent-yellow-500 ${mat.estadoAsistencia === 'Tardanza' ? 'ring-2 ring-yellow-500 ring-offset-1' : ''}`}
                       />
                       <label className="flex items-center space-x-1 text-sm text-gray-700 cursor-pointer flex-1">
                         <Clock className="w-4 h-4 text-yellow-500" />
@@ -484,7 +490,7 @@ const AsistenciasPage: React.FC = () => {
                         name={`asistencia-${index}`}
                         checked={mat.estadoAsistencia === 'Justificado'}
                         onChange={() => handleEstadoChange(index, 'Justificado')}
-                        className="w-4 h-4 cursor-pointer accent-purple-500"
+                        className={`w-4 h-4 cursor-pointer accent-purple-500 ${mat.estadoAsistencia === 'Justificado' ? 'ring-2 ring-purple-500 ring-offset-1' : ''}`}
                       />
                       <label className="flex items-center space-x-1 text-sm text-gray-700 cursor-pointer flex-1">
                         <Shield className="w-4 h-4 text-purple-500" />

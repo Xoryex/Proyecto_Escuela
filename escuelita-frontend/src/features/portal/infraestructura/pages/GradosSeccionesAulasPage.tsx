@@ -138,8 +138,9 @@ const GradosSeccionesAulasPage: React.FC = () => {
             }
             setShowModalGrado(false);
             setGradoSeleccionado(null);
-        } catch {
-            toast.error(gradoSeleccionado ? 'Error al actualizar el grado' : 'Error al crear el grado');
+        } catch (err: any) {
+            const msg = err?.response?.data || err?.message || '';
+            toast.error(msg || (gradoSeleccionado ? 'Error al actualizar el grado' : 'Error al crear el grado'));
         } finally {
             setIsSubmittingGrado(false);
         }
@@ -199,8 +200,9 @@ const GradosSeccionesAulasPage: React.FC = () => {
             }
             setShowModalSeccion(false);
             setSeccionSeleccionada(null);
-        } catch {
-            toast.error(seccionSeleccionada ? 'Error al actualizar la sección' : 'Error al crear la sección');
+        } catch (err: any) {
+            const msg = err?.response?.data || err?.message || '';
+            toast.error(msg || (seccionSeleccionada ? 'Error al actualizar la sección' : 'Error al crear la sección'));
         } finally {
             setIsSubmittingSeccion(false);
         }
