@@ -152,7 +152,7 @@ module.exports = JSON.parse("{\"type\":\"application\",\"name\":\"AdminRoles\",\
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! C:\Users\xoryex\Desktop\Proyecto_Escuela\OS.js-Admin\src\packages\AdminRoles\index.js */"./index.js");
+module.exports = __webpack_require__(/*! C:\xampp\htdocs\Proyecto_Escuela\OS.js-Admin\src\packages\AdminRoles\index.js */"./index.js");
 
 
 /***/ }),
