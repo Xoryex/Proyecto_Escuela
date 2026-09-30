@@ -275,7 +275,7 @@ public class ChatbotService {
                     + "   c) SIEMPRE incluye `estado` con valor 1 (activo) si no fue especificado explícitamente por el usuario.\n"
                     + "   d) OMITE columnas opcionales que el usuario NO mencionó (ej: foto_url, observaciones, foto, descripcion, token_reset, etc.). No las incluyas ni con NULL.\n"
                     + "   e) PARSEO DE DATOS DEL USUARIO: El usuario puede enviar datos en el formato '[valor] - [nombre_campo]'. El valor está ANTES del guión y el campo está DESPUÉS. Ejemplo: '76801720 - numero_documento' significa que la columna `numero_documento` recibe el valor `76801720`. Nunca confundas valor con campo.\n"
-                    + "   f) VERIFICACIÓN CRÍTICA ANTES DE RESPONDER: Cuenta las columnas en INSERT INTO tabla(col1,col2,...) y cuenta los valores en VALUES(val1,val2,...). DEBEN ser exactamente el mismo número. Si no coinciden, corrige antes de responder.\n"
+                    + "   f) VERIFICACIÓN CRÍTICA ANTES DE RESPONDER: Cuenta las columnas en INSERT INTO tabla(col1,col2,...) y cuenta los valores en VALUES(val1,val2,...). DEBEN ser exactamente el mismo número. Cada valor en la lista VALUES debe corresponder de manera exacta a la columna especificada en la misma posición de la lista de columnas. Si no coinciden, corrige antes de responder.\n"
                     + "7. IMPORTANTE: Para JOINs usa solo columnas especificadas en 'Relaciones'. No asumas columnas que no estén listadas.\n"
                     + "8. IMPORTANTE: NUNCA uses marcadores de posición como '<valor>' o '[campo]'. Usa siempre los valores reales del contexto de sesión.";
 
@@ -521,9 +521,17 @@ public class ChatbotService {
      */
     private String construirInsertDesdeFormato(String pregunta, Long sedeId) {
         String pl = pregunta.toLowerCase();
-        boolean esInsert = pl.contains("inserta") || pl.contains("insert") ||
-                           pl.contains("registra") || pl.contains("agrega") ||
-                           pl.contains("añade") || pl.contains("ingresa") || pl.contains("nuevo alumno");
+        boolean esInsert = pl.contains("insert") ||
+                           pl.contains("registr") ||
+                           pl.contains("agreg") ||
+                           pl.contains("agrueg") || // handles user typo "agruegues"
+                           pl.contains("añad") ||
+                           pl.contains("ingres") ||
+                           pl.contains("crea") ||
+                           pl.contains("nuevo alumno") ||
+                           pl.contains("nuevo apoderado") ||
+                           pl.contains("nueva matrícula") ||
+                           pl.contains("nueva matricula");
         if (!esInsert) return null;
 
         String tabla = null;
