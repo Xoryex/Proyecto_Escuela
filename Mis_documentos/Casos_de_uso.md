@@ -1,4 +1,25 @@
-CASOS DE USO DETALLADOS
+CASOS DE USO DETALLADOS — SISTEMA SIAE (ESCUELITA)
+
+NOTA DE AUDITORIA UML 2.5:
+- Actores Primarios reales: SuperAdmin, Administrador (Sede), Coordinador Academico, Secretaria, Docente (Profesor), Tesoreria y Planificador Automatico (CronJob diario).
+- Actor Secundario externo real: Proveedor de Identidad RENIEC (via API Decolecta). Nota: los controladores Spring Boot, servicios y la BD MySQL indicados en las fichas tecnicas corresponden a "Componentes Internos" del sistema, no a actores UML externos.
+- Casos de uso tecnicos / no de negocio (excluidos del diagrama UML de negocio): UC-024 (registro legacy de clientes API /restful/registros y /restful/token) y UC-032 (utilitario de desarrollo POST /utils/generate-hash para generar hashes BCrypt).
+- Relaciones UML principales:
+  * UC-001 Autenticar Usuario --<<include>>--> Validar Vigencia de Suscripcion (UC-034 / SuscripcionValidator)
+  * UC-001 Autenticar Usuario <--<<include>>-- UC-002 Verificar Sesion Escuela (validacion de token JWT)
+  * UC-008 Gestionar Suscripciones --<<include>>--> UC-006 Gestionar Sedes y Limites por Suscripcion
+  * UC-010 Gestionar Pagos de Suscripcion --<<include>>--> UC-030 Cargar Archivos (comprobante)
+  * UC-018 Gestionar Alumnos <--<<extend>>-- UC-031 Consultar Identidad en RENIEC (CU-E02)
+  * UC-019 Gestionar Apoderados <--<<extend>>-- UC-031 Consultar Identidad en RENIEC
+  * UC-020 Gestionar Matriculas --<<include>>--> Verificar Vacantes Disponibles (CU-E05)
+  * UC-020 Gestionar Matriculas <--<<extend>>-- UC-029 Gestionar Documentacion del Alumno
+  * UC-029 Gestionar Documentacion del Alumno --<<include>>--> UC-030 Cargar Archivos
+  * UC-016 Registrar Calificaciones y Promedios --<<include>>--> UC-015 Gestionar Evaluaciones y Tipos de Nota
+  * UC-027 Gestionar Pagos en Caja y Detalle --<<include>>--> UC-026 Gestionar Deudas del Alumno (liquidacion)
+  * UC-027 Gestionar Pagos en Caja y Detalle --<<extend>>--> UC-020 Confirmar Pago de Matricula
+- Diagrama UML editable en draw.io: Mis_documentos/Diagramas_Casos_de_Uso_SIAE.drawio (8 pestanas: 15.1_Fig1_General a 15.8_Fig8_SaaS_Reportes).
+
+---
 
 UC-001: Autenticar Usuario
 
@@ -1041,8 +1062,6 @@ Prioridad                MUST
 ---
 
 MATRIZ DE TRAZABILIDAD UNIFICADA (UC <-> SRS RF/RNF <-> CU-E <-> CODIGO REAL)
-
-Nota: El modulo de Asistente IA / Chatbot fue descartado del alcance activo y su logica quedo archivada en `chatbot_archivado/` para uso futuro.
 
 | UC | Caso de Uso | RF Modulo | RF/RNF Documento de Vision (SRS) | Equivalente CU-E | Implementado en Codigo |
 | :--- | :--- | :--- | :--- | :--- | :--- |

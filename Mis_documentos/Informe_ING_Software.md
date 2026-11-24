@@ -110,7 +110,7 @@ De forma paralela al progreso del año escolar, el Módulo de Control y Evaluaci
 
 En la vertiente económica, el Módulo de Tesorería y Finanzas (MTF) centraliza el flujo de ingresos mediante un catálogo de Conceptos de Pago (matrícula, pensiones, uniformes). Para procesar cobros, el personal debe interactuar con la Caja. Un pago regulariza el Estado de Cuenta del estudiante, permitiendo métodos como Efectivo, Transferencia o Yape, y emitiendo un recibo electrónico. Adicionalmente, el sistema expone una interfaz web independiente y de solo lectura para que los apoderados consulten el historial de pagos y descarguen recibos en PDF, reduciendo la carga operativa en la ventanilla del colegio.
 
-Como capa de apoyo operativo y consulta avanzada de información, el dominio incorpora un asistente inteligente IA, que interactúa con el sistema a través de una API REST (mediante el endpoint /api/chatbot/preguntar). Este componente permite a los usuarios administrativos enviar consultas en lenguaje natural (por ejemplo, preguntar cuántas secciones existen y qué alumnos están matriculados en ellas) mediante peticiones en formato JSON. El motor de IA procesa la solicitud, consulta el estado actual de los registros académicos y devuelve respuestas precisas en tiempo real (indicando, por ejemplo, qué secciones específicas tienen alumnos y cuáles están vacías), agilizando drásticamente la extracción de datos sin depender de reportes estáticos.
+Como capa de soporte institucional y validación externa, el dominio incorpora una integración REST con el servicio de identidad **RENIEC (vía Decolecta)** mediante el endpoint `/api/reniec/dni/{dni}`, que permite autocompletar los datos de alumnos, apoderados y administradores con precisión, así como un modelo **multi-tenancy por sede** y un módulo de **suscripciones SaaS** con verificación documental de pagos y actualización automática de vigencia.
 
 ## **2.2 Entidades del Dominio**
 
@@ -233,7 +233,7 @@ classDiagram
 
 ## **3.1 Diagrama de Casos de Uso General**
 
-El siguiente diagrama detalla los casos de uso definidos para los 6 módulos nucleares de la plataforma **ESCUELITA**, modelando los roles del Super Administrador, Administrador de Sede, Docente, Apoderado y la interacción especial del Chatbot de IA:
+El siguiente diagrama detalla los casos de uso definidos para los módulos nucleares de la plataforma **ESCUELITA**, modelando los roles del Super Administrador, Administrador de Sede, Docente, Apoderado y la integración externa con RENIEC:
 
 ```mermaid
 graph LR
@@ -356,25 +356,26 @@ stateDiagram-v2
     RechazarMatricula --> [*]
 ```
 
-### **3.3.2 Diagrama de Actividad — Integración con Módulo IA**
+### **3.3.2 Diagrama de Actividad — Consulta de Identidad por DNI (RENIEC)**
 
-Representa el flujo de procesamiento de consultas en lenguaje natural de los usuarios, la traducción a SQL ejecutado sobre la conexión de solo lectura o modificadora permitida, y el formateo final de respuesta:
+Representa el flujo de validación y autocompletado de identidad por DNI mediante el servicio externo RENIEC (Decolecta) durante el registro de alumnos o apoderados:
 
 ```mermaid
 stateDiagram-v2
     [*] --> Inicio
-    Inicio --> RecibirPregunta: Usuario ingresa texto
-    RecibirPregunta --> EnviarAOllama: prompt = pregunta + esquema_cache
-    EnviarAOllama --> GenerarSQL: Ollama infiere consulta
-    GenerarSQL --> ValidarSQL: ChatbotService.validarConsultaSql()
-    state sql_valid_decision <<choice>>
-    ValidarSQL --> sql_valid_decision
-    sql_valid_decision --> EjecutarBD: Es SELECT o Cambio Permitido (Matriculas/Notas)
-    sql_valid_decision --> DenegarAcceso: Es comando no permitido/destructivo
-    EjecutarBD --> FormatearRespuesta: Enviar resultado a Ollama
-    FormatearRespuesta --> MostrarUsuario: Responder en lenguaje natural
-    DenegarAcceso --> MostrarError: Código 403 / Mensaje de error
-    MostrarUsuario --> [*]
+    Inicio --> IngresarDNI: Usuario ingresa DNI (8 dígitos)
+    IngresarDNI --> ValidarFormato: Validar 8 dígitos numéricos
+    state formato_decision <<choice>>
+    ValidarFormato --> formato_decision
+    formato_decision --> ConsultarRENIEC: Formato válido
+    formato_decision --> MostrarError: Formato inválido
+    ConsultarRENIEC --> VerificarRespuesta: GET /api/reniec/dni/{dni}
+    state reniec_decision <<choice>>
+    VerificarRespuesta --> reniec_decision
+    reniec_decision --> AutocompletarFormulario: Datos encontrados
+    reniec_decision --> IngresoManual: No encontrado o timeout
+    AutocompletarFormulario --> [*]
+    IngresoManual --> [*]
     MostrarError --> [*]
 ```
 
@@ -395,7 +396,7 @@ stateDiagram-v2
 
 # **4\. CASOS DE USO DETALLADOS**
 
-Esta sección especifica en detalle los 34 casos de uso activos identificados del sistema, agrupados por módulo funcional (el módulo Chatbot IA fue descartado de esta versión y archivado en `chatbot_archivado/`). Cada tabla incluye el actor responsable, precondiciones, flujos principal y alternativo, excepciones y los requerimientos del SRS que implementa.
+Esta sección especifica en detalle los 34 casos de uso activos identificados del sistema, agrupados por módulo funcional. Cada tabla incluye el actor responsable, precondiciones, flujos principal y alternativo, excepciones y los requerimientos del SRS que implementa.
 
 
 
@@ -1015,48 +1016,38 @@ Esta sección especifica en detalle los 34 casos de uso activos identificados de
 
 ### **Diagrama de Secuencia por Caso de Uso Crítico**
 
-A continuación se presenta el diagrama de secuencia detallado para el caso de uso de **Consulta Inteligente mediante Chatbot IA**, el cual ilustra el flujo de llamadas síncronas entre la interfaz de usuario, los servicios de Spring Boot, Ollama y la base de datos con privilegios controlados:
+A continuación se presenta el diagrama de secuencia detallado para el caso de uso **UC-020: Gestionar Matrículas (con verificación de vacantes)**, el cual ilustra el flujo de llamadas síncronas entre la interfaz React, el filtro JWT/RBAC, los controladores/servicios de Spring Boot y la base de datos MySQL:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Usuario as Administrador / Docente
+    actor Usuario as Administrador / Tesorería
     participant UI as React Frontend
-    participant Ctrl as ChatbotController
-    participant Serv as ChatbotService
-    participant DB as MySQL (Solo Lectura / Modif. Notas)
-    participant Ollama as Ollama API (/api/chat)
+    participant Sec as JwtFilter / ModuloAccesoAspect
+    participant Ctrl as MatriculasController
+    participant Serv as MatriculasService
+    participant DB as MySQL (Escuela)
 
-    Usuario->>UI: Ingresa pregunta/instrucción
-    UI->>Ctrl: POST /api/chatbot/preguntar (JSON)
-    activate Ctrl
-    Ctrl->>Serv: procesarPregunta(pregunta)
-    activate Serv
-    Note over Serv: Lee estructura de tablas desde caché dbSchemaCached
-    Serv->>Ollama: Enviar esquema + pregunta (Messages List)
-    activate Ollama
-    Ollama-->>Serv: Retorna consulta SQL generada (ej: SELECT / UPDATE)
-    deactivate Ollama
-    Serv->>Serv: validarConsultaSql(sql) [Validación y Filtros]
-    
-    alt SQL Aprobado (SELECT o Escritura de Matrícula/Notas)
-        Serv->>DB: ejecutarConsulta(sql)
-        activate DB
-        DB-->>Serv: Resultados (JSON / Filas afectadas)
-        deactivate DB
-        Serv->>Ollama: Enviar pregunta + resultados BD
-        activate Ollama
-        Ollama-->>Serv: Respuesta en lenguaje natural (Español)
-        deactivate Ollama
-        Serv-->>Ctrl: respuestaFormateada
-        Ctrl-->>UI: HTTP 200 OK (JSON respuesta)
-        UI-->>Usuario: Muestra la respuesta en el chat
-    else SQL Denegado (Comando Destructivo o Tabla Restringida)
-        Serv-->>Ctrl: Lanza IllegalArgumentException
-        deactivate Serv
-        Ctrl-->>UI: HTTP 403 Forbidden (JSON error)
-        deactivate Ctrl
-        UI-->>Usuario: Muestra error: "Acceso denegado"
+    Usuario->>UI: Selecciona alumno, año, grado y sección
+    UI->>Sec: GET /restful/matriculas/vacantes-disponibles (Bearer JWT)
+    Sec->>Ctrl: Autoriza módulo 6 (MATRÍCULAS) + TenantContext
+    Ctrl->>Serv: consultarVacantesDisponibles(idSeccion, idAnio)
+    Serv->>DB: Consulta capacidad y matrículas activas
+    DB-->>Serv: Retorna vacantes disponibles
+    Serv-->>Ctrl: int vacantes
+    Ctrl-->>UI: HTTP 200 OK (vacantes)
+
+    alt Hay vacantes disponibles
+        Usuario->>UI: Confirma registro de matrícula
+        UI->>Ctrl: POST /restful/matriculas (JSON)
+        Ctrl->>Serv: guardar(matricula)
+        Serv->>DB: INSERT INTO matriculas
+        DB-->>Serv: Matrícula persistida
+        Serv-->>Ctrl: Matricula creada
+        Ctrl-->>UI: HTTP 200 OK
+        UI-->>Usuario: Muestra confirmación de matrícula
+    else Sin vacantes
+        UI-->>Usuario: Bloquea registro ("Sección sin vacantes")
     end
 ```
 
@@ -1066,30 +1057,31 @@ sequenceDiagram
 
 ## **5.1 Descripción de la Arquitectura Elegida**
 
-El **Sistema de Gestión Académica "ESCUELITA"** se estructura bajo un estilo arquitectónico de **Capas Desacopladas (Cliente-Servidor)** apoyado por una Single Page Application (SPA) en el frontend y un backend de Microservicios Monolíticos basado en controladores REST. La justificación de esta arquitectura responde a requerimientos de seguridad e interoperabilidad:
+El **Sistema de Gestión Académica "ESCUELITA"** se estructura bajo un estilo arquitectónico de **Capas Desacopladas (Cliente-Servidor)** apoyado por una Single Page Application (SPA) en el frontend y un backend REST modular en Spring Boot. La justificación de esta arquitectura responde a requerimientos de seguridad, aislamiento multi-sede e interoperabilidad:
 
-*   **Presentación (React/Vite)**: Capa cliente desacoplada que se ejecuta directamente en el navegador del usuario final, optimizando el rendimiento mediante componentes reactivos.
-*   **Lógica de Negocio (Spring Boot)**: Capa intermedia que concentra las reglas del negocio, la seguridad perimetral (JWT + Spring Security) y los flujos conversacionales de la IA.
-*   **Módulo de Inteligencia Artificial (Ollama Local)**: Capa analítica independiente integrada en el mismo servidor de aplicación para garantizar costo cero y privacidad de datos.
-*   **Persistencia (MySQL)**: Base de datos relacional para el control seguro de transacciones.
+*   **Presentación (React/Vite + TypeScript)**: Capa cliente desacoplada que se ejecuta directamente en el navegador del usuario final, separada en Backoffice SuperAdmin (`/admin`) y Portal Escuela (`/escuela`).
+*   **Lógica de Negocio (Spring Boot)**: Capa intermedia que concentra las reglas del negocio, la seguridad perimetral (JWT + Spring Security + `@RequireModulo`), el aislamiento multi-tenancy (`TenantContext`), la integración con RENIEC (`DecolectaService`) y el planificador diario de suscripciones (`SuscripcionScheduler`).
+*   **Persistencia (MySQL)**: Base de datos relacional para el control seguro y transaccional de instituciones, sedes, matrículas, evaluaciones y tesorería.
 
 ## **5.2 Diagrama C4 — Nivel 1: Contexto del Sistema**
 
-Muestra la interacción global de la escuela Saber Wassi y sus diferentes actores con el sistema de software:
+Muestra la interacción global de la escuela Saber Wassi, sus actores y el proveedor externo RENIEC con el sistema de software:
 
 ```mermaid
 graph TB
     SA[Super Administrador]
     AS[Administrador Sede]
     D[Docente]
-    AP[Apoderado]
+    T[Tesorería]
+    RENIEC[API RENIEC / Decolecta]
 
-    sys[Sistema ESCUELITA]
+    sys[Sistema ESCUELITA / SIAE]
 
     SA --> sys
     AS --> sys
     D --> sys
-    AP --> sys
+    T --> sys
+    sys --> RENIEC
 ```
 
 ## **5.3 Diagrama C4 — Nivel 2: Contenedores**
@@ -1099,69 +1091,79 @@ Describe los subsistemas de software y base de datos desplegados que integran el
 ```mermaid
 graph TB
     subgraph Cliente
-        spa[React SPA - Vite / HTML5 / CSS3]
+        spa[React SPA - Vite / TypeScript / Tailwind]
     end
 
     subgraph Servidor de Aplicación
-        api[Spring Boot REST API]
-        ollama[Ollama Local Engine - Qwen2.5:7b]
+        api[Spring Boot REST API - JWT / RBAC / Multi-Tenancy]
     end
 
     subgraph Servidor de Base de Datos
         db[(MySQL Database)]
     end
 
+    subgraph Externo
+        reniec[API Decolecta / RENIEC]
+    end
+
     spa -- HTTP / JSON REST --> api
-    api -- JDBC (root) --> db
-    api -- JDBC (escuela_ia_ro) --> db
-    api -- HTTP / JSON --> ollama
+    api -- JDBC / HikariCP --> db
+    api -- HTTPS / JSON --> reniec
 ```
 
 ## **5.4 Diagrama C4 — Nivel 3: Componentes**
 
-Abre el contenedor del Backend y detalla los componentes clave implicados en el procesamiento de la lógica de negocio y consultas del chatbot:
+Abre el contenedor del Backend y detalla los componentes clave implicados en la seguridad, multi-tenancy y servicios escolares:
 
 ```mermaid
 graph TB
-    subgraph Chatbot Component
-        ctrl[ChatbotController]
-        serv[ChatbotService]
-        client[OllamaClient]
+    subgraph Security & Multi-Tenancy
+        jwt[JwtFilter / JwtUtil]
+        rbac[ModuloAccesoAspect / RequireModulo]
+        tenant[TenantContext / TenantInterceptor]
     end
 
     subgraph Core Backend Components
-        security[Spring Security / JwtFilter]
-        datasource[HikariPool / DataSource]
+        ctrls[REST Controllers - 50 controladores]
+        servs[JPA Services + SuscripcionValidator]
+        sched[SuscripcionScheduler - Cron 02:00 AM]
+        reniec[DecolectaService - RENIEC]
+        repos[Spring Data JPA Repositories]
     end
 
-    ctrl --> security
-    ctrl --> serv
-    serv --> client
-    serv --> datasource
+    jwt --> tenant
+    jwt --> rbac
+    rbac --> ctrls
+    ctrls --> servs
+    servs --> repos
+    servs --> reniec
+    sched --> repos
 ```
 
 ## **5.5 Diagrama de Despliegue**
 
-Detalla la topología de hardware y servidores físicos locales donde opera la solución:
+Detalla la topología de hardware y servidores donde opera la solución:
 
 ```mermaid
 graph TD
     subgraph DispositivoUsuario["Dispositivo Usuario"]
-        browser["Navegador Web - Chrome / Edge"]
+        browser["Navegador Web - Chrome / Edge / Firefox"]
     end
 
-    subgraph ServidorLocal["Servidor Local - LAN"]
+    subgraph ServidorAplicacion["Servidor de Aplicación"]
         apache["Apache Tomcat Embedded - Puerto 8080"]
-        jvm["Java Virtual Machine - JRE 17"]
+        jvm["Java Virtual Machine - JDK 17+"]
         mysql["MySQL Server - Puerto 3307"]
-        ollama_svc["Ollama Service - Puerto 11434"]
     end
 
-    browser -- "HTTP - Puerto 8080" --> apache
-    browser -- "Red LAN Local" --> apache
+    subgraph ServicioExterno["Servicio Externo"]
+        decolecta["API RENIEC / Decolecta (HTTPS)"]
+    end
+
+    browser -- "HTTP/HTTPS - REST JSON" --> apache
     apache --> jvm
     jvm -- "JDBC Connection" --> mysql
-    jvm -- "Local HTTP Request" --> ollama_svc
+    jvm -- "HTTPS REST" --> decolecta
 ```
 
 ## **5.6 Decisiones Arquitectónicas (ADR)**
@@ -1169,10 +1171,10 @@ graph TD
 | ADR-ID | Decisión tomada | Alternativas evaluadas | Razón de la elección | Consecuencias / Trade-offs |
 | ----- | ----- | ----- | ----- | ----- |
 | **ADR-001** | Arquitectura de Capas Desacopladas (SPA + REST) | MVC Monolítico (Thymeleaf) | Facilita la modularidad del código y permite que el cliente React se ejecute sin sobrecargar el servidor backend. | Requiere manejo explícito de CORS y autenticación sin estado vía JWT. |
-| **ADR-002** | Java Spring Boot como backend | Node.js (Express), Django (Python) | Robustez transaccional requerida para el módulo de tesorería y excelente soporte de Spring Data JPA. | Mayor tiempo inicial de desarrollo y mayor uso de memoria en el servidor. |
-| **ADR-003** | Ollama Local (Qwen 2.5:7b) para módulo IA | OpenIA API (ChatGPT), Claude API | Garantiza la confidencialidad total de los datos de los alumnos y elimina costos recurrentes de API. | Exige un servidor físico local con una GPU moderada para obtener tiempos de respuesta rápidos. |
-| **ADR-004** | MySQL como base de datos | PostgreSQL, SQL Server | Motor relacional estándar, ligero para entornos locales y con bajo costo de administración. | Menor cantidad de tipos estructurados avanzados nativos en comparación con PostgreSQL. |
-| **ADR-005** | Caché del esquema en PostConstruct | Carga del esquema en caliente por consulta | Evita sobrecargar a Ollama enviándole metadatos por consulta, reduciendo el consumo de tokens y optimizando el tiempo de respuesta. | Si se altera la base de datos (DDL), se debe reiniciar el servidor para limpiar la caché. |
+| **ADR-002** | Java Spring Boot como backend | Node.js (Express), Django (Python) | Robustez transaccional requerida para matrículas y tesorería y excelente soporte de Spring Data JPA. | Mayor consumo de memoria inicial en comparación con scripts ligeros. |
+| **ADR-003** | Multi-Tenancy lógico por Sede (`TenantContext`) | Una BD física por colegio | Permite operar múltiples instituciones y sedes SaaS en una sola instancia con bajo costo operativo. | Exige disciplina de filtrado por `id_sede` en servicios y repositorios. |
+| **ADR-004** | MySQL como base de datos | PostgreSQL, SQL Server | Motor relacional estándar, ligero para entornos locales/nube y con bajo costo de administración. | Menor cantidad de tipos estructurados avanzados nativos en comparación con PostgreSQL. |
+| **ADR-005** | Integración externa RENIEC vía Decolecta | Ingreso 100% manual | Reduce errores de digitación en DNI, nombres y apellidos de alumnos y apoderados. | Depende de la disponibilidad de red externa (con respaldo de ingreso manual). |
 
 ## **5.7 Stack Tecnológico**
 
@@ -1180,14 +1182,13 @@ El entorno de desarrollo y ejecución de **ESCUELITA** está compuesto por las s
 
 | Capa | Tecnología | Versión | Justificación |
 | ----- | ----- | :---: | ----- |
-| **Frontend** | HTML5 / CSS3 / JavaScript | — | Estándares web nativos de estructuración y diseño de interfaces. |
-| **Frontend Framework** | React.js (Vite) | 18.x | SPA moderna que agiliza el renderizado de la UI escolar. |
-| **Backend** | Java + Spring Boot | 3.2.x | Backend transaccional robusto y seguro de alta productividad. |
-| **Motor IA Local** | Ollama Engine | 0.1.x | Motor ejecutor del modelo Qwen2.5:7b para análisis offline. |
+| **Frontend** | HTML5 / CSS3 / TypeScript | — | Tipado estático y estándares web modernos para interfaces confiables. |
+| **Frontend Framework** | React.js (Vite + Tailwind) | 18.x | SPA moderna y responsiva para Backoffice y Portal Escuela. |
+| **Backend** | Java + Spring Boot | 3.x | Backend transaccional robusto, seguro y modular. |
 | **BD Relacional** | MySQL Server | 8.0 / 3307 | Almacenamiento seguro e indexado de datos institucionales. |
 | **ORM** | Spring Data JPA / Hibernate | 6.x | Abstracción del SQL manual para agilizar operaciones CRUD. |
-| **Seguridad** | Spring Security + JWT | — | Protección de endpoints y manejo de sesiones sin estado. |
-| **IDE Backend** | VS Code / IntelliJ IDEA | — | Entornos integrados de desarrollo utilizados por el equipo. |
+| **Seguridad** | Spring Security + JWT (JJWT) + BCrypt | 0.12.6 | Protección de endpoints, sesiones stateless y permisos RBAC por módulo. |
+| **Integración** | API Decolecta (RENIEC) | v1 | Validación y autocompletado oficial de identidad por DNI. |
 | **Control versiones** | Git + GitHub | — | Repositorio centralizado para el versionamiento de código. |
 
 # **6\. PATRONES DE DISEÑO APLICADOS**
@@ -1198,124 +1199,108 @@ A continuación se resumen los patrones de diseño Gang of Four (GoF) implementa
 
 | Patrón | Categoría GoF | Módulo del sistema | Problema que resuelve | Beneficio obtenido |
 | ----- | ----- | ----- | ----- | ----- |
-| **Singleton** | Creacional | Conexión a BD (HikariCP) | Solo debe existir un pool de conexiones activo a la BD. | Evita múltiples pools de conexión y sobrecarga de memoria del servidor. |
-| **Facade (Fachada)** | Estructural | Chatbot IA | Múltiples componentes lógicos complejos (esquema, validación, Ollama, BD). | El controlador solo llama a un método de fachada (`procesarPregunta`) abstrayéndose de la complejidad. |
-| **Adapter (Adaptador)** | Estructural | Cliente Ollama | Interfaz HTTP de Ollama con formato específico (`/api/chat`). | Adapta los prompts del sistema a la estructura de Mensajes JSON requerida por la API de Ollama. |
+| **Singleton** | Creacional | Conexión a BD (HikariCP) y Beans Spring | Solo debe existir una instancia compartida del pool de conexiones y servicios stateless. | Evita múltiples pools de conexión y sobrecarga de memoria del servidor. |
+| **Facade (Fachada)** | Estructural | Matrículas y Suscripciones | Múltiples repositorios y validaciones (cupo, alumno, sede, estado de suscripción). | Los controladores invocan un método de fachada simplificado (`MatriculasService`, `SuscripcionesService`). |
+| **Adapter (Adaptador)** | Estructural | Integración RENIEC (`DecolectaService`) | La API externa Decolecta retorna estructuras JSON propias ajenas al dominio escolar. | Adapta la respuesta externa a `ReniecResponseDTO` uniforme para el frontend. |
+| **Proxy / Aspect (AOP)** | Estructural | Seguridad RBAC (`ModuloAccesoAspect`) | Validar permisos por módulo en decenas de endpoints sin duplicar código. | Intercepta métodos anotados con `@RequireModulo` centralizando el control de acceso. |
 
 ## **6.2 Especificación Detallada de Cada Patrón**
 
-### **6.2.1 Patrón: Facade (Fachada) en Chatbot**
+### **6.2.1 Patrón: Facade (Fachada) en Gestión de Matrículas**
 
 *   **Categoría GoF**: Estructural.
-*   **Problema (contexto del sistema)**: El controlador REST `ChatbotController` necesita procesar una pregunta de lenguaje natural, pero esto requiere: obtener el esquema en caché, conectarse con la API de Ollama, limpiar y validar sintácticamente el SQL obtenido para evitar ataques inyectados, conectarse mediante el DataSource a la base de datos de solo lectura, ejecutar el SQL y volver a interactuar con la IA para formatear la respuesta.
-*   **Solución que aplica**: Implementar la clase de fachada `ChatbotService` que oculta toda esta orquestación de llamadas complejas detrás de una interfaz simple de un único método público.
-*   **Clases involucradas**: `ChatbotController` (Cliente), `ChatbotService` (Fachada), `OllamaClient` (Subsistema), `DataSource` (Subsistema).
+*   **Problema (contexto del sistema)**: Formalizar una matrícula requiere validar al alumno, comprobar vacantes disponibles por sección y año escolar, aislar por sede (`TenantContext`) y confirmar pagos.
+*   **Solución que aplica**: `MatriculasService` actúa como fachada unificando la coordinación entre repositorios (`MatriculasRepository`, `SeccionesRepository`, `AlumnosRepository`, `AnioEscolarRepository`).
 *   **SOLID**: Principio de Responsabilidad Única (SRP) y Acoplamiento Débil.
 
-### **6.2.2 Patrón: Adapter (Adaptador) en OllamaClient**
+### **6.2.2 Patrón: Adapter (Adaptador) en `DecolectaService` (RENIEC)**
 
 *   **Categoría GoF**: Estructural.
-*   **Problema**: La aplicación Java trabaja internamente con textos planos de tipo `String` (`systemPrompt`, `userPrompt`), pero la API de Ollama espera recibir una estructura compleja tipo JSON conteniendo arreglos de mensajes (`messages`) con atributos estructurados (`role` y `content`).
-*   **Solución que aplica**: La clase `OllamaClient` actúa como un Adaptador de interfaces, recibiendo parámetros sencillos en Java y adaptándolos a la especificación de payloads HTTP JSON que requiere el servicio `/api/chat` de Ollama.
-*   **Clases involucradas**: `ChatbotService` (Cliente), `OllamaClient` (Adaptador), `HttpClient` (Clase adaptada).
+*   **Problema**: El sistema escolar requiere un DTO limpio con nombres y apellidos a partir de un DNI, mientras que el proveedor externo expone su propio contrato HTTP con token Bearer y estructura de errores particular.
+*   **Solución que aplica**: `DecolectaService` adapta las llamadas HTTP (`RestTemplate`) y traduce las respuestas externas hacia `ReniecResponseDTO` / `ReniecErrorDTO`.
 *   **SOLID**: Principio de Inversión de Dependencias (DIP) y Principio Abierto/Cerrado (OCP).
 
 ```mermaid
 classDiagram
-    class ChatbotService {
-        +procesarPregunta(String pregunta)
+    class ReniecController {
+        +consultarDni(String dni) ResponseEntity
     }
-    class OllamaClient {
-        +generate(String system, String user)
+    class DecolectaService {
+        +consultarPorDni(String dni) ReniecResponseDTO
     }
-    class HttpClient {
-        +send(HttpRequest, BodyHandler)
+    class RestTemplate {
+        +exchange(url, method, entity, type)
     }
-    ChatbotService ..> OllamaClient : adapta prompts
-    OllamaClient --> HttpClient : realiza peticion HTTP
+    ReniecController ..> DecolectaService : delega consulta
+    DecolectaService --> RestTemplate : realiza peticion HTTPS
 ```
 
 # **7\. MODELO DE DISEÑO — DIAGRAMAS UML**
 
-## **7.1 Diagrama de Clases de Diseño (Completo)**
+## **7.1 Diagrama de Clases de Diseño (Núcleo del Sistema)**
 
-Muestra las clases de software reales implementadas en el backend de Spring Boot, incluyendo sus atributos, métodos principales y las relaciones existentes:
+Muestra las clases de software reales implementadas en el backend de Spring Boot, incluyendo sus atributos, métodos principales y relaciones:
 
 ```mermaid
 classDiagram
-    class ChatbotController {
-        -ChatbotService chatbotService
-        +preguntar(Map request) ResponseEntity
+    class MatriculasController {
+        -IMatriculasService serviceMatriculas
+        +guardar(MatriculasDTO dto) ResponseEntity
+        +confirmarPago(Long id) ResponseEntity
+        +consultarVacantesDisponibles(Long idSeccion, Long idAnio) ResponseEntity
     }
-    class ChatbotService {
-        -DataSource primaryDataSource
-        -OllamaClient ollamaClient
-        -String dbSchemaCached
-        +initSchema() void
-        +procesarPregunta(String pregunta) String
-        -crearUsuarioSoloLectura() void
-        -getDatabaseSchemaDescription() String
-        -validarConsultaSql(String sql) void
-        -ejecutarConsulta(String sql) List
+    class MatriculasService {
+        -MatriculasRepository repoMatriculas
+        -SeccionesRepository repoSecciones
+        +guardar(Matriculas m) Matriculas
+        +confirmarPagoMatricula(Long id) String
+        +consultarVacantesDisponibles(Long idSeccion, Long idAnio) int
     }
-    class OllamaClient {
-        -String apiUrl
-        -String model
-        -HttpClient httpClient
-        -ObjectMapper objectMapper
-        +generate(String systemPrompt, String userPrompt) String
+    class ReniecController {
+        -DecolectaService decolectaService
+        +consultarDni(String dni) ResponseEntity
     }
-    class AlumnoEntity {
-        -int idAlumno
+    class Alumnos {
+        -Long idAlumno
         -String nombres
         -String apellidos
-        -String dni
+        -String numeroDocumento
     }
-    class MatriculaEntity {
-        -int idMatricula
-        -Date fechaMatricula
+    class Matriculas {
+        -Long idMatricula
+        -String codigoMatricula
         -String estadoMatricula
     }
 
-    ChatbotController --> ChatbotService : usa
-    ChatbotService --> OllamaClient : usa
-    ChatbotService ..> AlumnoEntity : consulta/modifica
-    ChatbotService ..> MatriculaEntity : consulta/modifica
+    MatriculasController --> MatriculasService : usa
+    MatriculasService ..> Alumnos : asocia
+    MatriculasService ..> Matriculas : persiste
+    ReniecController ..> Alumnos : apoya registro
 ```
 
 ## **7.2 Diagramas de Secuencia de Diseño**
 
-### **7.2.1 Secuencia de Diseño — UC-033: Consultar Chatbot IA**
+### **7.2.1 Secuencia de Diseño — UC-031: Consultar Identidad en RENIEC**
 
-Representa detalladamente el flujo de llamadas a nivel de código de los objetos Spring Boot y métodos JDBC implicados en el procesamiento de la pregunta:
+Representa detalladamente el flujo de llamadas a nivel de código de los componentes Spring Boot en la consulta de DNI:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Admin as Administrador / Docente
-    participant Ctrl as ChatbotController
-    participant Serv as ChatbotService
-    participant Client as OllamaClient
-    participant DB as MySQL (JPA/JDBC)
+    actor Admin as Administrador / Secretaría
+    participant Ctrl as ReniecController
+    participant Serv as DecolectaService
+    participant API as API Decolecta (RENIEC)
 
-    Admin->>Ctrl: POST /api/chatbot/preguntar {"pregunta": "..."}
+    Admin->>Ctrl: GET /api/reniec/dni/{dni}
     activate Ctrl
-    Ctrl->>Serv: procesarPregunta("...")
+    Ctrl->>Serv: consultarDni(dni)
     activate Serv
-    Serv->>Client: generate(systemPrompt, userPrompt)
-    activate Client
-    Client-->>Serv: return sqlGenerada (String)
-    deactivate Client
-    Serv->>Serv: validarConsultaSql(sqlGenerada)
-    Serv->>DB: ejecutarConsulta(sqlGenerada)
-    activate DB
-    DB-->>Serv: return resultados (List<Map>)
-    deactivate DB
-    Serv->>Client: generate(formatPrompt, userPromptFormat)
-    activate Client
-    Client-->>Serv: return respuestaFinal (String)
-    deactivate Client
-    Serv-->>Ctrl: return respuestaFinal (String)
+    Serv->>API: GET /v1/reniec/dni?numero={dni} (Bearer Token)
+    activate API
+    API-->>Serv: JSON (nombres, apellidoPaterno, apellidoMaterno)
+    deactivate API
+    Serv-->>Ctrl: ReniecResponseDTO
     deactivate Serv
     Ctrl-->>Admin: ResponseEntity (HTTP 200 OK)
     deactivate Ctrl
@@ -1535,8 +1520,7 @@ graph TD
     DDash --> Asistencias[Registro de Asistencias por Sección]
     DDash --> Calificaciones[Registro de Calificaciones por Curso]
     
-    SADash --> Chatbot[Panel Asistente IA Chatbot]
-    ADash --> Chatbot
+    SADash --> Reportes[Panel de Reportes Gerenciales]
 ```
 
 ## **9.3 Prototipos por Módulo**
@@ -1564,12 +1548,11 @@ Formulario estructurado en pestañas (Wizard) para registrar la matrícula de un
 *   **Pestaña 3: Configuración Académica**: Selección del año escolar, grado, sección y aula. Valida dinámicamente las vacantes libres.
 *   **Pestaña 4: Carga Documentaria**: Zona de drag & drop para subir escaneos obligatorios de documentos en PDF o JPG.
 
-### **9.3.4 Pantalla: Panel de Asistente IA Chatbot**
-La interfaz conversacional integrada que permite realizar consultas e instrucciones en lenguaje natural.
-*   **Caja de Chat**: Historial visual de la conversación con globos diferenciados (Usuario en azul, Chatbot en verde).
-*   **Caja de Texto**: Input donde el administrador escribe la pregunta (ej: *"¿Qué alumnos tienen promedios desaprobados en Álgebra?"* o *"Modifica las observaciones de la matrícula MAT-2026-5149..."*).
-*   **Botón Enviar**: Envía la solicitud al endpoint REST backend.
-*   **Área de Respuesta**: Renderiza la respuesta redactada de forma amigable por el modelo `qwen2.5:7b` de Ollama. Si es una operación bloqueada (ej: borrar una tabla), muestra el cartel de error 403.
+### **9.3.4 Pantalla: Panel de Reportes Gerenciales (Backoffice SuperAdmin)**
+Interfaz consolidada de analítica para el Super Administrador:
+*   **Vistas disponibles**: Estadísticas Generales, Uso del Sistema, Ingresos, Salud Comercial, Pagos de Suscripción, Alumnos y Reporte Académico.
+*   **Filtros dinámicos**: Institución, sede, rango de fechas y estado de suscripción/pago.
+*   **Salida**: Indicadores KPI, gráficos comparativos y tablas exportables.
 
 ---
 
@@ -1595,8 +1578,6 @@ La interfaz conversacional integrada que permite realizar consultas e instruccio
 | **RF-35, RF-43 / RF-REP-01, 02** | Reportes académicos y gerenciales del Backoffice | UC-017, UC-033 | `ReporteAcademicoController`, `PagoSuscripcionController` | Consultas agregadas multi-tabla | `backoffice/reportes` (7 vistas) |
 | **RF-44, RNF-01, RNF-06 / RF-ADM-03, RF-OPS-01** | SuperAdmins, registros, hash y aislamiento multi-tenancy | UC-003, UC-011, UC-024, UC-032 | `SuperAdminsController`, `RegistrosController`, `UtilsController`, `TenantContext`, `TenantInterceptor` | `super_admins`, `registros` | `backoffice/usuarios` |
 
-> **Nota:** El módulo de Asistente IA (Chatbot / Ollama) fue descartado de la versión activa y su código fuente fue resguardado en `chatbot_archivado/` para posible reactivación futura.
-
 ---
 
 # **11\. GLOSARIO DE TÉRMINOS**
@@ -1604,7 +1585,7 @@ La interfaz conversacional integrada que permite realizar consultas e instruccio
 *   **Año Escolar**: Periodo anual oficial de clases escolares dividido administrativamente en bimestres o trimestres.
 *   **Apoderado**: Persona legalmente responsable del estudiante ante la institución, encargada de la matrícula y la facturación.
 *   **Calificación**: Calificación del rendimiento estudiantil en base a la escala del MINEDU (Literal A, B, C, AD).
-*   **Chatbot IA**: Agente inteligente integrado basado en el modelo local Qwen 2.5 que traduce instrucciones en lenguaje natural a código SQL seguro.
+*   **Multi-Tenancy**: Arquitectura lógica que aísla los datos de cada institución y sede mediante contexto de sesión (`TenantContext`).
 *   **Diccionario de Datos**: Documento técnico detallado que define los tipos de datos, restricciones y propósitos de las tablas de la base de datos MySQL.
 *   **Ficha Multisección**: Formulario digital de matrícula del alumno estructurado para recopilar datos de contacto, médicos e historial legal.
 *   **Sede**: Ubicación física del colegio (ej: Sede Principal, Sede Anexo) con sus respectivas aulas físicas asignadas.
@@ -1619,7 +1600,7 @@ La interfaz conversacional integrada que permite realizar consultas e instruccio
 El script SQL completo para la creación lógica de la base de datos, relaciones de llaves foráneas y datos iniciales de configuración se encuentra adjunto en el archivo de recursos de base de datos del proyecto: [data.sql](file:///c:/xampp/htdocs/Proyecto_Escuela/escuelita-backend/src/main/resources/data.sql).
 
 ## **Apéndice B — Prototipos en Alta Fidelidad**
-Los diseños e interacciones de la aplicación web del colegio Saber Wassi en alta fidelidad y el flujo interactivo de pantallas para la matrícula y el Chatbot IA se encuentran disponibles en el Figma del proyecto.
+Los diseños e interacciones de la aplicación web del colegio Saber Wassi en alta fidelidad y el flujo interactivo de pantallas para la matrícula y reportes gerenciales se encuentran disponibles en el Figma del proyecto.
 
 ## **Apéndice C — Cronograma de Desarrollo (Iteraciones)**
 
@@ -1629,14 +1610,14 @@ Los diseños e interacciones de la aplicación web del colegio Saber Wassi en al
 | **Sprint 2** | Iteración 2 | Gestión Docente (MGD) y Registro del Padrón (MMT). | Asignación de Carga Horaria y Registro de Alumnos. | Grupo 01 |
 | **Sprint 3** | Iteración 3 | Procesamiento de Matrículas (MMT) y Caja Inicial (MTF). | Ficha de Matrícula + Carga de Documentos PDF. | Grupo 01 |
 | **Sprint 4** | Iteración 4 | Evaluaciones y Notas (MCE) y Recaudación (MTF). | Registro de Calificaciones por Bimestre y Recibos. | Grupo 01 |
-| **Sprint 5** | Iteración 5 | Integración del Agente IA Chatbot (Ollama API local). | Chatbot conversacional con restricciones SQL activas. | Grupo 01 |
+| **Sprint 5** | Iteración 5 | Backoffice SaaS, Integración RENIEC y Reportes Gerenciales. | Suscripciones, límites por sede, consulta DNI y 7 vistas de reportes. | Grupo 01 |
 
 ## **Apéndice D — Informe de Revisión Técnica (RTF)**
 
 | Rev. N° | Fecha | Revisor | Observaciones | Estado |
 | ----- | ----- | ----- | ----- | ----- |
 | **R-001** | 17/06/2026 | Marco Antonio Reategui B. | Revisión del esquema ER de base de datos escolar. | ✅ Aprobado |
-| **R-002** | 11/07/2026 | Brayam Arista Fernández | Integración del Chatbot con permisos mixtos e IA local. | ✅ Aprobado |
+| **R-002** | 11/07/2026 | Brayam Arista Fernández | Revisión de aislamiento multi-tenancy, RBAC e integración RENIEC. | ✅ Aprobado |
 
 ## **Apéndice E — Firmas y Aprobación**
 

@@ -612,7 +612,6 @@ def generate_complete_document():
     add_bullet_item(" Paneles consolidados de estadísticas, uso, ingresos, salud comercial, pagos de suscripción, alumnos y rendimiento académico.", "Reportes Gerenciales Backoffice:")
 
     add_sub_heading("8.2", "¿Qué queda fuera del alcance? (Excluido)")
-    add_bullet_item(" El módulo de asistente conversacional IA (Chatbot / Ollama) ha sido descartado de la versión activa; su lógica fuente queda resguardada en la carpeta chatbot_archivado/ para una eventual evaluación futura.", "Asistente Conversacional IA (Chatbot):")
     add_bullet_item(" No se contempla la liquidación de sueldos, compensaciones laborales, CTS ni beneficios del personal.", "Gestión de planillas y recursos humanos:")
     add_bullet_item(" No incluye libros contables oficiales, balances tributarios SUNAT ni estados financieros mercantiles.", "Contabilidad general corporativa:")
     add_bullet_item(" El software no se conecta de forma directa a los servidores centrales del MINEDU; se limita a la exportación de reportes compatibles.", "Interoperabilidad directa con SIAGIE:")
@@ -723,7 +722,7 @@ def generate_complete_document():
         "El sistema está dirigido a cinco perfiles de usuario: SuperAdmin, Administrador de sede, Docentes, Personal de Tesorería y Apoderados (consulta). "
         "Su alcance abarca seis módulos funcionales (Seguridad, Infraestructura Académica, Gestión Docente, Matrícula, Control y Evaluación, y Tesorería) "
         "más un sistema SaaS de suscripciones, integración con servicio RENIEC para validación de DNI y reportes gerenciales de backoffice. "
-        "Quedan excluidos el asistente conversacional IA (descartado y archivado para evaluación futura), la gestión de planillas, la contabilidad general corporativa y la interoperabilidad directa en tiempo real con SIAGIE."
+        "Quedan excluidos la gestión de planillas, la contabilidad general corporativa y la interoperabilidad directa en tiempo real con SIAGIE."
     )
 
     # =========================================================================
@@ -866,173 +865,177 @@ def generate_complete_document():
         "presenta primero un diagrama general y luego un diagrama específico por cada módulo funcional de la institución educativa."
     )
     add_body_p(
-        "Los actores primarios son cinco: SuperAdmin (gestión global de plataforma), Administrador (gestión operativa de la sede), "
-        "Docente (registro académico y notas), Personal de Tesorería (gestión financiera y caja) y Apoderado (consulta familiar). "
-        "Los actores secundarios son la Base de Datos MySQL (persistencia transaccional) y el Proveedor de Identidad RENIEC (validación de DNI)."
+        "Los actores primarios son seis: SuperAdmin (gestión global SaaS y backoffice), Administrador de sede (gestión operativa de la sede), "
+        "Coordinador Académico (malla, docentes y horarios), Secretaría (alumnos, apoderados y expediente), Docente (asistencias y evaluaciones) "
+        "y Personal de Tesorería (conceptos, deudas y cobros en caja). Los actores secundarios externos son el Proveedor de Identidad RENIEC "
+        "(validación de DNI vía Decolecta) y el Planificador Diario (CronJob de vigencia de suscripciones)."
     )
+
+    def resolve_fig_image(candidates):
+        for fname in candidates:
+            fpath = os.path.join(DOCS_DIR, fname)
+            if os.path.exists(fpath):
+                return fpath
+        return None
+
+    def add_figure_block(candidates, caption_text, width_in=5.9):
+        fpath = resolve_fig_image(candidates)
+        if fpath:
+            p_img = doc.add_paragraph()
+            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_img.paragraph_format.space_before = Pt(4)
+            p_img.paragraph_format.space_after = Pt(2)
+            p_img.add_run().add_picture(fpath, width=Inches(width_in))
+            p_cap = doc.add_paragraph()
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.paragraph_format.space_after = Pt(8)
+            rc = p_cap.add_run(caption_text)
+            rc.font.name = "Calibri"
+            rc.font.size = Pt(8.5)
+            rc.font.italic = True
+            rc.font.color.rgb = MUTED
 
     # 15.1 Diagrama General
     add_sub_heading("15.1", "Diagrama de casos de uso general")
     add_body_p(
-        "La Figura 1 reúne los casos de uso nucleares organizados en torno a la gestión escolar integral: seguridad y configuración, "
-        "matrícula, docencia, evaluación y finanzas. El diagrama muestra qué actor ejecuta cada caso y las relaciones «include» y «extend» "
-        "entre ellos. Iniciar Sesión es el caso de uso base utilizado por todos los roles."
+        "La Figura 1 reúne los casos de uso activos del sistema SIAE (UC-001 a UC-034) "
+        "organizados en cinco bloques funcionales: seguridad y backoffice SaaS, infraestructura y docencia, alumnos y matrículas, evaluación y asistencia, "
+        "y tesorería. Muestra los actores primarios, los actores secundarios externos (RENIEC y Planificador Diario) y las relaciones «include» y «extend»."
     )
-    fig1_file = os.path.join(DOCS_DIR, "fig1_diagrama_general.png")
-    if os.path.exists(fig1_file):
-        p_img1 = doc.add_paragraph()
-        p_img1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img1.paragraph_format.space_before = Pt(4)
-        p_img1.paragraph_format.space_after = Pt(2)
-        p_img1.add_run().add_picture(fig1_file, width=Inches(6.2))
-        p_cap1 = doc.add_paragraph()
-        p_cap1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap1.paragraph_format.space_after = Pt(8)
-        rc1 = p_cap1.add_run("Figura 1. Diagrama de casos de uso general del sistema de gestión escolar.")
-        rc1.font.name = "Calibri"
-        rc1.font.size = Pt(8.5)
-        rc1.font.italic = True
-        rc1.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.1_Fig1_General.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.1_Fig1_General.jpg",
+            "Diagramas_Casos_de_Uso_SIAE-01_Vista_General_SIAE.png",
+            "Diagramas_Casos_de_Uso_SIAE-01_Vista_General_SIAE.jpg",
+            "fig1_diagrama_general.png",
+        ],
+        "Figura 1. Diagrama de casos de uso general del sistema de gestión escolar SIAE.",
+        width_in=6.2,
+    )
 
     # 15.2 Seguridad
     add_sub_heading("15.2", "Módulo de seguridad y configuración")
     add_body_p(
-        "La Figura 2 contiene los casos UC-001 Iniciar Sesión (JWT / BCrypt), UC-002 Recuperar Contraseña, UC-003 Gestionar Usuarios y "
-        "UC-004 Gestionar Roles y Permisos. Todos los roles inician sesión. La administración de cuentas de usuario, roles y la matriz de "
-        "permisos CRUD por módulo queda a cargo exclusivo del Administrador y SuperAdmin. Los casos de uso consultan y persisten información "
-        "en la Base de Datos MySQL con cifrado seguro."
+        "La Figura 2 contiene los casos UC-001 Autenticar Usuario (Login Admin / Escuela con JWT y BCrypt), UC-002 Verificar Sesión Escuela "
+        "(«include» desde UC-001), UC-003 Registrar Cuenta SuperAdmin, UC-004 Gestionar Usuarios por Institución y Sede, UC-005 Gestionar Roles "
+        "y Permisos por Módulo (RBAC) y UC-011 Gestionar Cuentas SuperAdmin. En el inicio de sesión de escuela, UC-001 incluye obligatoriamente "
+        "la validación de vigencia de suscripción institucional."
     )
-    fig2_file = os.path.join(DOCS_DIR, "fig2_seguridad.png")
-    if os.path.exists(fig2_file):
-        p_img2 = doc.add_paragraph()
-        p_img2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img2.add_run().add_picture(fig2_file, width=Inches(5.8))
-        p_cap2 = doc.add_paragraph()
-        p_cap2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap2.paragraph_format.space_after = Pt(8)
-        rc2 = p_cap2.add_run("Figura 2. Diagrama de casos de uso del módulo de seguridad y configuración.")
-        rc2.font.name = "Calibri"
-        rc2.font.size = Pt(8.5)
-        rc2.font.italic = True
-        rc2.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.2_Fig2_Seguridad.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.2_Fig2_Seguridad.jpg",
+            "fig2_seguridad.png",
+        ],
+        "Figura 2. Diagrama de casos de uso del módulo de seguridad y configuración (MSC).",
+        width_in=5.9,
+    )
 
     # 15.3 Infraestructura
     add_sub_heading("15.3", "Módulo de infraestructura académica")
     add_body_p(
-        "La Figura 3 contiene los casos UC-006 Configuración Institucional y Sedes, UC-007 Gestionar Años Escolares y Periodos, "
-        "UC-008 Gestionar Pabellones, Aulas y Aforos, y UC-009 Aperturar Grados, Secciones y Vacantes. El SuperAdmin configura las sedes físicas "
-        "y datos fiscales del colegio, mientras que el Administrador de sede gestiona el calendario lectivo y apertura las vacantes por aula."
+        "La Figura 3 agrupa los casos UC-007 Gestionar Datos de Institución Educativa, UC-006 Gestionar Sedes y Límites por Suscripción, "
+        "UC-012 Gestionar Año Escolar y Periodos Académicos, y UC-013 Gestionar Grados, Secciones y Aulas (con «include» hacia el control "
+        "de capacidad y aforo máximo de aulas). El SuperAdmin administra la institución y las sedes, mientras que el Administrador de sede "
+        "configura el calendario lectivo y la estructura física."
     )
-    fig3_file = os.path.join(DOCS_DIR, "fig3_infraestructura.png")
-    if os.path.exists(fig3_file):
-        p_img3 = doc.add_paragraph()
-        p_img3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img3.add_run().add_picture(fig3_file, width=Inches(5.8))
-        p_cap3 = doc.add_paragraph()
-        p_cap3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap3.paragraph_format.space_after = Pt(8)
-        rc3 = p_cap3.add_run("Figura 3. Diagrama de casos de uso del módulo de infraestructura académica.")
-        rc3.font.name = "Calibri"
-        rc3.font.size = Pt(8.5)
-        rc3.font.italic = True
-        rc3.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.3_Fig3_Infraestructura.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.3_Fig3_Infraestructura.jpg",
+            "fig3_infraestructura.png",
+        ],
+        "Figura 3. Diagrama de casos de uso del módulo de infraestructura académica (MIA).",
+        width_in=5.9,
+    )
 
     # 15.4 Docencia
     add_sub_heading("15.4", "Módulo de gestión docente y horarios")
     add_body_p(
-        "La Figura 4 contiene los casos UC-010 Gestionar Catálogo de Cursos, UC-011 Configurar Jornadas y Horarios, UC-012 Registrar "
-        "Perfiles Docentes, UC-013 Asignar Carga Académica y UC-014 Validar Cruces de Horarios. El Administrador registra profesores y "
-        "les asigna materias por sección; la asignación tiene una relación obligatoria «include» con UC-014 para validar algorítmicamente que no "
-        "existan colisiones de horarios ni de aulas asignadas."
+        "La Figura 4 modela los casos UC-014 Gestionar Malla Curricular (Áreas, Cursos y Especialidades), UC-023 Gestionar Perfil Docente "
+        "y Asignación Académica, y UC-022 Gestionar Horarios Académicos. El Administrador de sede y el Coordinador Académico administran la oferta "
+        "curricular y asignan docentes a secciones; la programación de horarios (UC-022) incluye la validación de cruces para evitar colisiones "
+        "de docente, aula o sección."
     )
-    fig4_file = os.path.join(DOCS_DIR, "fig4_docencia.png")
-    if os.path.exists(fig4_file):
-        p_img4 = doc.add_paragraph()
-        p_img4.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img4.add_run().add_picture(fig4_file, width=Inches(5.8))
-        p_cap4 = doc.add_paragraph()
-        p_cap4.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap4.paragraph_format.space_after = Pt(8)
-        rc4 = p_cap4.add_run("Figura 4. Diagrama de casos de uso del módulo de gestión docente y horarios.")
-        rc4.font.name = "Calibri"
-        rc4.font.size = Pt(8.5)
-        rc4.font.italic = True
-        rc4.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.4_Fig4_Docencia.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.4_Fig4_Docencia.jpg",
+            "fig4_docencia.png",
+        ],
+        "Figura 4. Diagrama de casos de uso del módulo de gestión docente y horarios (MGD).",
+        width_in=5.9,
+    )
 
     # 15.5 Matrícula
     add_sub_heading("15.5", "Módulo de matrícula y expediente estudiantil")
     add_body_p(
-        "La Figura 5 contiene los casos CU-E01 Registrar Alumno, CU-E02 Consultar Identidad por DNI, CU-E03 Vincular Apoderado, "
-        "CU-E04 Registrar Matrícula Formal y CU-E05 Verificar Vacantes Disponibles. Registrar Alumno tiene una relación «extend» con Consultar "
-        "Identidad por DNI (consumiendo la API de RENIEC para autocompletar nombres). Registrar Matrícula tiene una relación «include» con "
-        "Verificar Vacantes Disponibles, deteniendo el registro si la sección alcanzó su aforo máximo."
+        "La Figura 5 reúne los casos UC-018 (CU-E01) Gestionar Ficha de Alumnos, UC-031 (CU-E02) Consultar Identidad por DNI (RENIEC), "
+        "UC-019 (CU-E03) Gestionar Apoderados y Vínculos, UC-020 (CU-E04) Gestionar Matrículas y Confirmar Pago, CU-E05 Verificar Vacantes "
+        "Disponibles, UC-029 Gestionar Documentación y Requisitos del Alumno, UC-030 Cargar Archivos y UC-028 Gestionar Movimientos del Alumno. "
+        "La consulta RENIEC extiende opcionalmente a UC-018 y UC-019, mientras que UC-020 incluye obligatoriamente CU-E05."
     )
-    fig5_file = os.path.join(DOCS_DIR, "fig5_matricula.png")
-    if os.path.exists(fig5_file):
-        p_img5 = doc.add_paragraph()
-        p_img5.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img5.add_run().add_picture(fig5_file, width=Inches(5.8))
-        p_cap5 = doc.add_paragraph()
-        p_cap5.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap5.paragraph_format.space_after = Pt(8)
-        rc5 = p_cap5.add_run("Figura 5. Diagrama de casos de uso del módulo de matrícula.")
-        rc5.font.name = "Calibri"
-        rc5.font.size = Pt(8.5)
-        rc5.font.italic = True
-        rc5.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.5_Fig5_Matricula.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.5_Fig5_Matricula.jpg",
+            "fig5_matricula.png",
+        ],
+        "Figura 5. Diagrama de casos de uso del módulo de matrícula y expediente estudiantil (MMT).",
+        width_in=5.9,
+    )
 
     # 15.6 Control y Evaluación
     add_sub_heading("15.6", "Módulo de control y evaluación académica")
     add_body_p(
-        "La Figura 6 contiene los casos UC-020 Panel 'Mis Cursos', UC-021 Registrar Asistencia Diaria, UC-023 Registrar Calificaciones, "
-        "UC-025 Calcular Promedios Ponderados y UC-026 Generar Boleta de Notas PDF. Los profesores toman asistencia y registran notas desde su "
-        "panel; Registrar Calificaciones incluye automáticamente el cálculo de promedios ponderados bimestrales. El Administrador y los Apoderados "
-        "pueden exportar y descargar las libretas oficiales en formato PDF."
+        "La Figura 6 contiene los casos UC-021 Gestionar Asistencias Diarias y Reportes, UC-015 Gestionar Evaluaciones, Tipos de Evaluación "
+        "y Tipos de Nota, UC-016 Registrar Calificaciones y Calcular Promedios (con «include» hacia UC-015 y validación de escala/rango) "
+        "y UC-017 Generar Reporte Académico Consolidado. Participan el Docente, el Coordinador Académico y el Administrador de sede."
     )
-    fig6_file = os.path.join(DOCS_DIR, "fig6_evaluacion.png")
-    if os.path.exists(fig6_file):
-        p_img6 = doc.add_paragraph()
-        p_img6.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img6.add_run().add_picture(fig6_file, width=Inches(5.8))
-        p_cap6 = doc.add_paragraph()
-        p_cap6.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap6.paragraph_format.space_after = Pt(8)
-        rc6 = p_cap6.add_run("Figura 6. Diagrama de casos de uso del módulo de control y evaluación.")
-        rc6.font.name = "Calibri"
-        rc6.font.size = Pt(8.5)
-        rc6.font.italic = True
-        rc6.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.6_Fig6_Evaluacion.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.6_Fig6_Evaluacion.jpg",
+            "fig6_evaluacion.png",
+        ],
+        "Figura 6. Diagrama de casos de uso del módulo de control y evaluación académica (MCE).",
+        width_in=5.9,
+    )
 
     # 15.7 Tesorería
     add_sub_heading("15.7", "Módulo de tesorería y finanzas")
     add_body_p(
-        "La Figura 7 agrupa los casos del módulo financiero: UC-025 Gestionar Conceptos y Métodos de Pago, CU-E06 (UC-027) Registrar Pago en Caja "
-        "y Detalle, CU-E07 (UC-026) Consultar y Gestionar Deudas del Alumno, así como los casos proyectados de Apertura/Cierre de Caja (RF-32), "
-        "Emisión de Recibo Electrónico PDF y Portal de Consulta Apoderado (RF-37). El personal de tesorería configura aranceles, liquida deudas "
-        "mediante distintos métodos de pago y actualiza en tiempo real el estado de cuenta del estudiante."
+        "La Figura 7 agrupa los casos del módulo financiero: UC-025 Gestionar Conceptos y Métodos de Pago, UC-027 (CU-E06) Registrar Pagos "
+        "en Caja y Detalle de Operaciones, UC-026 (CU-E07) Gestionar y Consultar Deudas del Alumno y la extensión UC-020 Confirmar Pago de "
+        "Matrícula. Registrar Pagos en Caja incluye la actualización/liquidación de deudas (UC-026) y la aplicación de conceptos y métodos (UC-025)."
     )
-    fig7_file = os.path.join(DOCS_DIR, "fig7_tesoreria.png")
-    if os.path.exists(fig7_file):
-        p_img7 = doc.add_paragraph()
-        p_img7.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_img7.add_run().add_picture(fig7_file, width=Inches(5.8))
-        p_cap7 = doc.add_paragraph()
-        p_cap7.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_cap7.paragraph_format.space_after = Pt(8)
-        rc7 = p_cap7.add_run("Figura 7. Diagrama de casos de uso del módulo de tesorería y finanzas.")
-        rc7.font.name = "Calibri"
-        rc7.font.size = Pt(8.5)
-        rc7.font.italic = True
-        rc7.font.color.rgb = MUTED
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.7_Fig7_Tesoreria.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.7_Fig7_Tesoreria.jpg",
+            "fig7_tesoreria.png",
+        ],
+        "Figura 7. Diagrama de casos de uso del módulo de tesorería y finanzas (MTF).",
+        width_in=5.9,
+    )
 
     # 15.8 Módulo SaaS de suscripciones y reportes gerenciales
     add_sub_heading("15.8", "Módulo SaaS de suscripciones y reportes gerenciales")
     add_body_p(
-        "Complementando los seis módulos escolares, el sistema implementa capacidades transversales y de Backoffice SuperAdmin: "
-        "UC-006 Gestionar Sedes y Límites por Suscripción, UC-008 Gestionar Suscripciones, UC-009 Gestionar Catálogos de Suscripción (planes, "
-        "estados y ciclos de facturación), UC-010 Gestionar y Verificar Pagos de Suscripción, UC-033 Consultar Reportes Gerenciales del Backoffice "
-        "(estadísticas, uso, ingresos, salud comercial, pagos y alumnos) y UC-034 Validar y Actualizar Vigencia de Suscripciones mediante proceso "
-        "automático diario."
+        "La Figura 8 representa las capacidades transversales del Backoffice SuperAdmin: UC-008 Gestionar Ciclo de Vida de Suscripciones "
+        "(con «include» hacia UC-009 Catálogos de Planes/Ciclos y UC-006 Límites de Sedes), UC-010 Registrar, Verificar y Rechazar Pagos de "
+        "Suscripción (con «include» hacia UC-030 Cargar Comprobante), UC-033 Consultar Reportes Gerenciales del Backoffice (7 vistas KPI) y "
+        "UC-034 Validar y Actualizar Vigencia de Suscripciones ejecutado automáticamente a las 02:00 AM por el Planificador Diario."
+    )
+    add_figure_block(
+        [
+            "Diagramas_Casos_de_Uso_SIAE-15.8_Fig8_SaaS_Reportes.png",
+            "Diagramas_Casos_de_Uso_SIAE-15.8_Fig8_SaaS_Reportes.jpg",
+            "fig8_saas_reportes.png",
+        ],
+        "Figura 8. Diagrama de casos de uso del módulo SaaS de suscripciones y reportes gerenciales.",
+        width_in=5.9,
     )
 
     # =========================================================================
@@ -1432,8 +1435,7 @@ def generate_complete_document():
     add_sub_heading("16.1", "Matriz de trazabilidad completa (Requerimientos ↔ Casos de Uso ↔ Implementación)")
     add_body_p(
         "La siguiente matriz vincula todos los requerimientos funcionales activos (RF-01 al RF-44) y no funcionales (RNF-01 al RNF-06) "
-        "con sus casos de uso unificados (UC-001 al UC-034 y equivalentes CU-E01 al CU-E07) e indica su estado real en el proyecto "
-        "(el módulo Chatbot IA fue descartado de esta versión y archivado en chatbot_archivado/):"
+        "con sus casos de uso unificados (UC-001 al UC-034 y equivalentes CU-E01 al CU-E07) e indica su estado real en el proyecto:"
     )
 
     trace_data = [
