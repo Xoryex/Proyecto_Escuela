@@ -704,7 +704,7 @@ Flujo Alternativo A      A-1: Docente no encontrado -> HTTP 404
 
 Flujo de Excepcion       E-1: Doble asignacion incompatible -> HTTP 400
 
-Requerimientos           RF-DOC-01 (Gestion Docente)
+Requerimientos           RF-MGD-01 (Gestion Docente) | SRS: RF-16, RF-17
 
 Prioridad                SHOULD
 
@@ -884,7 +884,7 @@ Flujo Alternativo A      A-1: Requisito inexistente -> HTTP 404
 
 Flujo de Excepcion       E-1: Archivo/documento invalido -> HTTP 400
 
-Requerimientos           RF-DOC-01 (Expediente del Alumno)
+Requerimientos           RF-EXP-01 (Expediente del Alumno) | SRS: RF-13, RF-41
 
 Prioridad                SHOULD
 
@@ -974,6 +974,110 @@ Flujo Alternativo A      A-1: Entrada vacia -> HTTP 400
 
 Flujo de Excepcion       E-1: Error interno de libreria -> HTTP 500
 
-Requerimientos           RF-TEC-01 (Utilitarios de Seguridad)
+Requerimientos           RF-TEC-01 (Utilitarios de Seguridad) | SRS: RNF-01
 
 Prioridad                COULD
+
+UC-033: Consultar Reportes Gerenciales y Dashboards del Backoffice
+
+Campo                    Descripcion
+
+ID                       UC-033
+
+Nombre                   Consultar indicadores, dashboards y reportes gerenciales del ecosistema SaaS
+
+Actor Primario           SuperAdmin / Admin
+
+Actores Secundarios      ReporteAcademicoController, PagoSuscripcionController, SuscripcionesController, AlumnosController, InstitucionController, Backoffice Frontend (/admin/reportes/*)
+
+Precondicion             Usuario autenticado con rol SuperAdmin (o Admin de sede para Dashboard Escuela)
+
+Postcondicion (exito)    Visualizacion y exportacion de reportes consolidados (estadisticas, uso, ingresos, salud comercial, pagos de suscripcion, alumnos y academico)
+
+Postcondicion (fallo)    Sin datos para el rango filtrado o acceso denegado por rol
+
+Endpoint real            GET /restful/reportes/academico | GET /restful/pagos-suscripcion/estadisticas | GET /restful/pagos-suscripcion/rango | GET /restful/suscripciones | GET /restful/institucion | GET /restful/alumnos (Vistas: /admin/reportes/estadisticas, /uso, /ingresos, /academico, /salud-comercial, /pagos-suscripcion, /alumnos)
+
+Flujo Principal          1. Seleccionar tipo de reporte gerencial 2. Aplicar filtros (fechas, institucion, sede, estado) 3. Consultar y consolidar metricas desde API 4. Renderizar graficos/tablas y exportar
+
+Flujo Alternativo A      A-1: Rango sin registros -> vista vacia informativa
+
+Flujo de Excepcion       E-1: Sin permisos de SuperAdmin -> HTTP 403
+
+Requerimientos           RF-REP-02 (Reportes Gerenciales Backoffice) | SRS: RF-35, RF-43
+
+Prioridad                SHOULD
+
+UC-034: Validar y Actualizar Vigencia de Suscripciones (Proceso Automatico)
+
+Campo                    Descripcion
+
+ID                       UC-034
+
+Nombre                   Ejecutar validacion automatica diaria de vencimiento y reactivacion de suscripciones
+
+Actor Primario           Sistema (Temporizador / CronJob @Scheduled)
+
+Actores Secundarios      SuscripcionScheduler, SuscripcionValidator, SuscripcionesRepository, EstadosSuscripcionRepository, BD MySQL
+
+Precondicion             Servicio backend en ejecucion con @EnableScheduling activo y suscripciones registradas
+
+Postcondicion (exito)    Suscripciones vencidas pasan a estado 'Vencida' (bloqueando login de sus sedes) y suscripciones extendidas se reactivan
+
+Postcondicion (fallo)    Error registrado en logs del servidor sin corromper estados existentes
+
+Endpoint real            Proceso automatico diario (Cron 02:00 AM en SuscripcionScheduler) + validacion en tiempo real durante POST /auth/escuela/login
+
+Flujo Principal          1. Temporizador dispara tarea diaria a las 02:00 AM 2. Consultar suscripciones registradas 3. Comparar fecha_vencimiento con fecha actual 4. Actualizar estado a 'Vencida' o reactivar a 'Activa' 5. Registrar trazabilidad en logs
+
+Flujo Alternativo A      A-1: Ejecucion manual administrativa (actualizarManualmente())
+
+Flujo de Excepcion       E-1: Error de conexion a BD -> registro en log de error y reintento en siguiente ciclo
+
+Requerimientos           RF-SUS-05 (Vigencia Automatica de Suscripciones) | SRS: RF-38, RNF-06 (NEE-006)
+
+Prioridad                MUST
+
+---
+
+MATRIZ DE TRAZABILIDAD UNIFICADA (UC <-> SRS RF/RNF <-> CU-E <-> CODIGO REAL)
+
+Nota: El modulo de Asistente IA / Chatbot fue descartado del alcance activo y su logica quedo archivada en `chatbot_archivado/` para uso futuro.
+
+| UC | Caso de Uso | RF Modulo | RF/RNF Documento de Vision (SRS) | Equivalente CU-E | Implementado en Codigo |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| UC-001 | Autenticar Usuario (Login Admin/Escuela) | RF-MSC-01 | RF-01, RNF-01 | — | Si (AdminAuthController, EscuelaAuthController) |
+| UC-002 | Verificar Sesion Escuela | RF-MSC-02 | RF-01, RNF-01 | — | Si (EscuelaAuthController, JwtFilter) |
+| UC-003 | Registrar SuperAdmin | RF-MSC-03 | RF-44, RNF-01 | — | Si (AdminAuthController) |
+| UC-004 | Gestionar Usuarios | RF-ADM-01 | RF-03 | — | Si (UsuariosController, portal/configuracion, backoffice/usuarios) |
+| UC-005 | Gestionar Roles y Permisos por Modulo | RF-ADM-02 | RF-04, RNF-01 | — | Si (RolesController, ModulosController, ModuloAccesoAspect) |
+| UC-006 | Gestionar Sedes y Limites por Suscripcion | RF-SUS-01 | RF-06, RF-39, RNF-06 | — | Si (SedesController, LimitesSedesSuscripcionController) |
+| UC-007 | Gestionar Institucion | RF-ORG-01 | RF-06 | — | Si (InstitucionController) |
+| UC-008 | Gestionar Suscripciones | RF-SUS-02 | RF-38 | — | Si (SuscripcionesController) |
+| UC-009 | Gestionar Catalogos de Suscripcion | RF-SUS-03 | RF-38 | — | Si (PlanesController, EstadosSuscripcionController, CiclosFacturacionController) |
+| UC-010 | Gestionar Pagos de Suscripcion | RF-SUS-04 | RF-40 | — | Si (PagoSuscripcionController) |
+| UC-011 | Gestionar SuperAdmins | RF-ADM-03 | RF-44 | — | Si (SuperAdminsController) |
+| UC-012 | Gestionar Anio Escolar y Periodos | RF-ACA-01 | RF-07 | — | Si (AnioEscolarController, PeriodosController) |
+| UC-013 | Gestionar Grados, Secciones y Aulas | RF-ACA-02 | RF-08, RF-09 | — | Si (GradosController, SeccionesController, AulasController) |
+| UC-014 | Gestionar Malla Curricular | RF-ACA-03 | RF-10 | — | Si (AreasController, CursosController, EspecialidadesController, MallaCurricularController) |
+| UC-015 | Gestionar Evaluaciones y Tipos de Nota | RF-ACA-04 | RF-22, RF-23 | — | Si (EvaluacionesController, TiposEvaluacionController, TiposNotaController) |
+| UC-016 | Registrar Calificaciones y Promedios | RF-ACA-05 | RF-22, RF-23, RF-28* | — | Si (CalificacionesController, PromediosPeriodoController; *boleta PDF pendiente) |
+| UC-017 | Generar Reporte Academico | RF-REP-01 | RF-28*, RF-43 | — | Si (ReporteAcademicoController) |
+| UC-018 | Gestionar Alumnos | RF-ALU-01 | RF-13 | CU-E01 | Si (AlumnosController, portal/alumnos) |
+| UC-019 | Gestionar Apoderados y Vinculos | RF-ALU-02 | RF-12 | CU-E03 | Si (ApoderadosController, AlumnoApoderadoController) |
+| UC-020 | Gestionar Matriculas y Vacantes | RF-MAT-01 | RF-14 | CU-E04, CU-E05 | Si (MatriculasController, portal/matriculas) |
+| UC-021 | Gestionar Asistencias | RF-ACA-06 | RF-21, RF-24, RF-25, RF-26, RF-27 | — | Si (AsistenciasController, AsistenciasPage, AsistenciasReportePage) |
+| UC-022 | Gestionar Horarios | RF-ACA-07 | RF-11 | — | Si (HorariosController, portal/academica/horarios) |
+| UC-023 | Gestionar Docentes y Asignacion | RF-MGD-01 | RF-16, RF-17 | — | Si (PerfilDocenteController, AsignacionDocenteController) |
+| UC-024 | Gestionar Registros Operativos | RF-OPS-01 | RF-44 | — | Si (RegistrosController) |
+| UC-025 | Gestionar Conceptos y Metodos de Pago | RF-PAG-01 | RF-31, RF-36 | — | Si (ConceptosPagoController, MetodosPagoController) |
+| UC-026 | Gestionar Deudas del Alumno | RF-PAG-02 | RF-33, RF-35 | CU-E07 | Si (DeudasAlumnoController, portal/tesoreria/deudas-alumnos) |
+| UC-027 | Gestionar Pagos en Caja y Detalle | RF-PAG-03 | RF-33 | CU-E06 | Si (PagosCajaController, PagoDetalleController) |
+| UC-028 | Gestionar Movimientos de Alumno | RF-ALU-03 | RF-15 | — | Parcial (Backend completo + modulo FE creado, falta enlazar ruta en App.tsx/Sidebar.tsx) |
+| UC-029 | Gestionar Documentacion del Alumno | RF-EXP-01 | RF-13, RF-41 | — | Si (TipoDocumentosController, RequisitosDocumentosController, DocumentosAlumnoController) |
+| UC-030 | Cargar Archivos | RF-DOC-02 | RF-41 | — | Si (FileUploadController) |
+| UC-031 | Consultar Identidad en RENIEC | RF-INT-01 | RF-42 | CU-E02 | Si (ReniecController, DecolectaService, useReniec) |
+| UC-032 | Generar Hash de Password | RF-TEC-01 | RNF-01 | — | Si (UtilsController) |
+| UC-033 | Consultar Reportes Gerenciales Backoffice | RF-REP-02 | RF-35, RF-43 | — | Si (backoffice/reportes: 7 vistas gerenciales) |
+| UC-034 | Validar Vigencia de Suscripciones (CronJob) | RF-SUS-05 | RF-38, RNF-06 | — | Si (SuscripcionScheduler, SuscripcionValidator) |
+

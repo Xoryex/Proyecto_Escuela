@@ -242,42 +242,47 @@ graph LR
         AS[Administrador Sede]
         D[Docente]
         AP[Apoderado]
-        IA[Chatbot IA]
+        RENIEC[RENIEC API]
     end
 
     subgraph Seguridad y Configuración
-        SA --> UC1[Iniciar Sesión]
-        SA --> UC2[Gestionar Usuarios y Roles]
-        AS --> UC1
-        D --> UC1
+        SA --> UC001[UC-001: Iniciar Sesión]
+        SA --> UC004[UC-004/005: Gestionar Usuarios, Roles y Permisos]
+        AS --> UC001
+        D --> UC001
     end
 
-    subgraph Infraestructura Académica
-        SA --> UC3[Configurar Sedes y Aulas]
-        SA --> UC4[Configurar Año Escolar]
+    subgraph Infraestructura y SaaS
+        SA --> UC006[UC-006/007/013: Configurar Institución, Sedes y Aulas]
+        SA --> UC008[UC-008/010/034: Gestionar Suscripciones y Pagos SaaS]
+        SA --> UC033[UC-033: Reportes Gerenciales Backoffice]
+        AS --> UC012[UC-012: Configurar Año Escolar y Periodos]
     end
 
-    subgraph Matrícula
-        AS --> UC5[Registrar Ficha de Alumno]
-        AS --> UC6[Registrar Apoderado]
-        AS --> UC7[Procesar Matrícula]
+    subgraph Gestión Docente
+        AS --> UC014[UC-014/022/023: Malla, Docentes y Horarios]
+    end
+
+    subgraph Matrícula y Expediente
+        AS --> UC018[UC-018/029/030: Registrar Alumno y Expediente]
+        UC018 -.->|extend| UC031[UC-031: Consultar DNI RENIEC]
+        UC031 -.-> RENIEC
+        AS --> UC019[UC-019: Registrar y Vincular Apoderado]
+        AS --> UC020[UC-020: Procesar Matrícula y Vacantes]
+        AS --> UC028[UC-028: Movimientos del Alumno]
     end
 
     subgraph Evaluación y Notas
-        D --> UC8[Registrar Asistencias]
-        D --> UC9[Registrar Calificaciones]
+        D --> UC021[UC-021: Registrar Asistencias]
+        D --> UC016[UC-015/016: Evaluaciones, Calificaciones y Promedios]
+        AS --> UC017[UC-017: Reporte Académico]
     end
 
     subgraph Tesorería y Finanzas
-        AS --> UC10[Configurar Aranceles]
-        AS --> UC11[Registrar Pagos de Pensiones]
-        AP --> UC12[Consultar Estado de Deuda]
-    end
-
-    subgraph Consultas Inteligentes
-        SA --> UC13[Consultar IA en Lenguaje Natural]
-        AS --> UC13
-        UC13 -.-> IA
+        AS --> UC025[UC-025: Configurar Conceptos y Métodos de Pago]
+        AS --> UC027[UC-027: Registrar Pagos en Caja]
+        AS --> UC026[UC-026: Gestionar Deudas de Alumnos]
+        AP --> UC026
     end
 ```
 
@@ -390,7 +395,7 @@ stateDiagram-v2
 
 # **4\. CASOS DE USO DETALLADOS**
 
-Esta sección especifica en detalle los 32 casos de uso identificados del sistema, agrupados por módulo funcional. Cada tabla incluye el actor responsable, precondiciones, flujos principal y alternativo, excepciones y los requerimientos del SRS que implementa.
+Esta sección especifica en detalle los 34 casos de uso activos identificados del sistema, agrupados por módulo funcional (el módulo Chatbot IA fue descartado de esta versión y archivado en `chatbot_archivado/`). Cada tabla incluye el actor responsable, precondiciones, flujos principal y alternativo, excepciones y los requerimientos del SRS que implementa.
 
 
 
@@ -807,7 +812,7 @@ Esta sección especifica en detalle los 32 casos de uso identificados del sistem
 | **Flujo Principal** | 1. Completar perfil docente 2. Asignar cursos/secciones 3. Validar disponibilidad 4. Guardar |
 | **Flujo Alternativo A** | A-1: Docente no encontrado -> HTTP 404 |
 | **Flujo de Excepción** | E-1: Doble asignacion incompatible -> HTTP 400 |
-| **Requerimientos relacionados** | RF-DOC-01 (Gestion Docente) |
+| **Requerimientos relacionados** | RF-MGD-01 (Gestion Docente) / SRS: RF-16, RF-17 |
 | **Prioridad** | SHOULD |
 
 ### **Caso de Uso UC-024: Administrar registros y generar token de soporte**
@@ -915,7 +920,7 @@ Esta sección especifica en detalle los 32 casos de uso identificados del sistem
 | **Flujo Principal** | 1. Configurar requisitos 2. Registrar documentos presentados 3. Consultar estado de expediente |
 | **Flujo Alternativo A** | A-1: Requisito inexistente -> HTTP 404 |
 | **Flujo de Excepción** | E-1: Archivo/documento invalido -> HTTP 400 |
-| **Requerimientos relacionados** | RF-DOC-01 (Expediente del Alumno) |
+| **Requerimientos relacionados** | RF-EXP-01 (Expediente del Alumno) / SRS: RF-13, RF-41 |
 | **Prioridad** | SHOULD |
 
 ### **Caso de Uso UC-030: Subir archivos generales, documentos y avatares**
@@ -969,8 +974,44 @@ Esta sección especifica en detalle los 32 casos de uso identificados del sistem
 | **Flujo Principal** | 1. Enviar texto plano 2. Generar hash BCrypt 3. Retornar hash |
 | **Flujo Alternativo A** | A-1: Entrada vacia -> HTTP 400 |
 | **Flujo de Excepción** | E-1: Error interno de libreria -> HTTP 500 |
-| **Requerimientos relacionados** | RF-TEC-01 (Utilitarios de Seguridad) |
+| **Requerimientos relacionados** | RF-TEC-01 (Utilitarios de Seguridad) / SRS: RNF-01 |
 | **Prioridad** | COULD |
+
+### **Caso de Uso UC-033: Consultar reportes gerenciales y dashboards del Backoffice**
+
+| Campo | Descripción |
+| :---- | :---- |
+| **ID del Caso de Uso** | UC-033 |
+| **Nombre** | Consultar reportes gerenciales y dashboards del Backoffice |
+| **Actor Primario** | SuperAdmin / Admin |
+| **Actores Secundarios** | ReporteAcademicoController, PagoSuscripcionController, SuscripcionesController, InstitucionController, AlumnosController |
+| **Precondición** | Usuario autenticado con perfil SuperAdmin (o Admin de sede para Dashboard Escuela) |
+| **Postcondición (éxito)** | Indicadores, gráficos y tablas gerenciales visualizados y exportables (estadísticas, uso, ingresos, salud comercial, pagos de suscripción, alumnos y académico) |
+| **Postcondición (fallo)** | Acceso denegado por falta de rol o rango de consulta sin registros |
+| **Endpoint real** | GET /restful/reportes/academico <br> GET /restful/pagos-suscripcion/estadisticas <br> GET /restful/pagos-suscripcion/rango <br> GET /restful/suscripciones <br> GET /restful/institucion <br> GET /restful/alumnos |
+| **Flujo Principal** | 1. Seleccionar vista de reporte (`/admin/reportes/*`) 2. Aplicar filtros de fecha, sede o institución 3. Consolidar datos del backend 4. Mostrar KPIs y exportar reporte |
+| **Flujo Alternativo A** | A-1: Sin datos en el filtro -> vista vacía informativa |
+| **Flujo de Excepción** | E-1: Usuario sin rol SuperAdmin -> HTTP 403 |
+| **Requerimientos relacionados** | RF-REP-02 (Reportes Gerenciales Backoffice) / SRS: RF-35, RF-43 |
+| **Prioridad** | SHOULD |
+
+### **Caso de Uso UC-034: Validar y actualizar vigencia de suscripciones (Proceso Automático)**
+
+| Campo | Descripción |
+| :---- | :---- |
+| **ID del Caso de Uso** | UC-034 |
+| **Nombre** | Validar y actualizar vigencia de suscripciones (CronJob diario) |
+| **Actor Primario** | Sistema (Planificador `@Scheduled`) |
+| **Actores Secundarios** | SuscripcionScheduler, SuscripcionValidator, SuscripcionesRepository, BD MySQL |
+| **Precondición** | Backend en ejecución con `@EnableScheduling` activo |
+| **Postcondición (éxito)** | Suscripciones vencidas pasan a estado `Vencida` y suscripciones renovadas se reactivan automáticamente |
+| **Postcondición (fallo)** | Error trazado en logs del servidor sin alterar integridad de datos |
+| **Endpoint real** | Proceso automático diario (02:00 AM en `SuscripcionScheduler`) + validación en `POST /auth/escuela/login` |
+| **Flujo Principal** | 1. Cron dispara tarea diaria a las 02:00 AM 2. Revisar fechas de vencimiento de suscripciones 3. Actualizar estados (`Vencida` / `Activa`) 4. Registrar log de auditoría |
+| **Flujo Alternativo A** | A-1: Disparo manual técnico (`actualizarManualmente()`) |
+| **Flujo de Excepción** | E-1: Error de conexión BD -> registro de error y reintento en siguiente ejecución |
+| **Requerimientos relacionados** | RF-SUS-05 (Vigencia Automática de Suscripciones) / SRS: RF-38, RNF-06 (NEE-006) |
+| **Prioridad** | MUST |
 
 ### **Diagrama de Secuencia por Caso de Uso Crítico**
 
@@ -1244,7 +1285,7 @@ classDiagram
 
 ## **7.2 Diagramas de Secuencia de Diseño**
 
-### **7.2.1 Secuencia de Diseño — UC-013: Consultar Chatbot IA**
+### **7.2.1 Secuencia de Diseño — UC-033: Consultar Chatbot IA**
 
 Representa detalladamente el flujo de llamadas a nivel de código de los objetos Spring Boot y métodos JDBC implicados en el procesamiento de la pregunta:
 
@@ -1534,15 +1575,27 @@ La interfaz conversacional integrada que permite realizar consultas e instruccio
 
 # **10\. MATRIZ DE TRAZABILIDAD**
 
-| ID Requerimiento | Descripción corta | Caso de Uso | Componentes / Clases Java | Tabla de BD | Pantalla / Prototipo |
+| ID Requerimiento (SRS / Módulo) | Descripción corta | Casos de Uso | Componentes / Clases Java | Tablas de BD | Pantalla / Módulo Frontend |
 | ----- | ----- | ----- | ----- | ----- | ----- |
-| **MSC-01** | Inicio de sesión | UC-001 | `AdminAuthController`, `JwtFilter` | `usuarios`, `roles` | Pantalla de Login |
-| **MIA-02** | Configuración de Sede | UC-003 | `SedeService`, `SedeRepository` | `sedes` | Gestión de Sedes |
-| **MGD-03** | Asignación Docente | UC-008 | `DocenteService`, `Seccion` | `docentes`, `secciones` | Carga Académica |
-| **MMT-04** | Registro de Matrícula | UC-002 | `MatriculaController`, `ChatbotService` | `matriculas`, `alumnos` | Ficha de Matrícula |
-| **MCE-05** | Evaluación y Notas | UC-009 | `CalificacionService`, `Calificacion` | `calificaciones` | Registro de Calificaciones |
-| **MTF-06** | Control de Caja | UC-011 | `PagoController`, `ConceptoPago` | `pagos`, `pagos_detalles` | Caja y Aranceles |
-| **MIA-07** | Chatbot Inteligente | UC-013 | `ChatbotController`, `ChatbotService`, `OllamaClient` | Todas (Esquema y Permisos) | Panel de Asistente IA |
+| **RF-01 / RF-MSC-01, 02** | Autenticación y verificación JWT | UC-001, UC-002 | `AdminAuthController`, `EscuelaAuthController`, `JwtFilter`, `SuscripcionValidator` | `usuarios`, `super_admins`, `suscripciones` | `Login`, `LoginEscuela` |
+| **RF-03, RF-04 / RF-ADM-01, 02** | Usuarios, roles y permisos RBAC | UC-004, UC-005 | `UsuariosController`, `RolesController`, `ModulosController`, `ModuloAccesoAspect` | `usuarios`, `roles`, `modulos`, `rol_modulo` | `portal/configuracion`, `backoffice/usuarios`, `backoffice/roles` |
+| **RF-06 / RF-ORG-01, RF-SUS-01** | Institución, sedes y límites | UC-006, UC-007 | `InstitucionController`, `SedesController`, `LimitesSedesSuscripcionController` | `institucion`, `sedes`, `limites_sedes_suscripcion` | `backoffice/instituciones`, `backoffice/sedes`, `portal/infraestructura` |
+| **RF-07, RF-08, RF-09 / RF-ACA-01, 02** | Año escolar, periodos, grados, secciones y aulas | UC-012, UC-013 | `AnioEscolarController`, `PeriodosController`, `GradosController`, `SeccionesController`, `AulasController` | `anio_escolar`, `periodos`, `grados`, `secciones`, `aulas` | `portal/infraestructura` |
+| **RF-10, RF-11 / RF-ACA-03, 07** | Áreas, cursos, especialidades, malla y horarios | UC-014, UC-022 | `AreasController`, `CursosController`, `EspecialidadesController`, `MallaCurricularController`, `HorariosController` | `areas`, `cursos`, `especialidades`, `malla_curricular`, `horarios` | `portal/academica` |
+| **RF-16, RF-17 / RF-MGD-01** | Gestión docente y asignación académica | UC-023 | `PerfilDocenteController`, `AsignacionDocenteController` | `perfil_docente`, `asignacion_docente` | `portal/academica/docentes`, `asignacion-docente` |
+| **RF-12, RF-13 / RF-ALU-01, 02** | Alumnos, apoderados y vínculos | UC-018, UC-019 (CU-E01, CU-E03) | `AlumnosController`, `ApoderadosController`, `AlumnoApoderadoController` | `alumnos`, `apoderados`, `alumno_apoderado` | `portal/alumnos`, `portal/apoderados` |
+| **RF-14 / RF-MAT-01** | Matrículas y control de vacantes | UC-020 (CU-E04, CU-E05) | `MatriculasController`, `MatriculasService` | `matriculas`, `secciones` | `portal/matriculas` |
+| **RF-15 / RF-ALU-03** | Movimientos y traslados del alumno | UC-028 | `MovimientosAlumnoController`, `MovimientosAlumnoService` | `movimientos_alumno` | `portal/movimientos-alumno` *(pendiente enlazar ruta)* |
+| **RF-21, RF-24..27 / RF-ACA-06** | Control y reporte de asistencias | UC-021 | `AsistenciasController`, `AsistenciasService` | `asistencias` | `portal/evaluaciones/asistencias` |
+| **RF-22, RF-23 / RF-ACA-04, 05** | Evaluaciones, calificaciones y promedios | UC-015, UC-016 | `EvaluacionesController`, `TiposEvaluacionController`, `TiposNotaController`, `CalificacionesController`, `PromediosPeriodoController` | `evaluaciones`, `tipos_evaluacion`, `tipos_nota`, `calificaciones`, `promedios_periodo` | `portal/evaluaciones` |
+| **RF-31, RF-33, RF-36 / RF-PAG-01..03** | Tesorería: conceptos, métodos, deudas y pagos en caja | UC-025, UC-026, UC-027 (CU-E06, CU-E07) | `ConceptosPagoController`, `MetodosPagoController`, `DeudasAlumnoController`, `PagosCajaController`, `PagoDetalleController` | `conceptos_pago`, `metodos_pago`, `deudas_alumno`, `pagos_caja`, `pago_detalle` | `portal/tesoreria` |
+| **RF-38, RF-39, RF-40 / RF-SUS-01..05** | Suscripciones SaaS, planes, pagos y vigencia automática | UC-006, UC-008, UC-009, UC-010, UC-034 | `SuscripcionesController`, `PlanesController`, `EstadosSuscripcionController`, `CiclosFacturacionController`, `PagoSuscripcionController`, `SuscripcionScheduler` | `suscripciones`, `planes`, `estados_suscripcion`, `ciclos_facturacion`, `pago_suscripcion` | `backoffice/suscripciones` |
+| **RF-41 / RF-EXP-01, RF-DOC-02** | Requisitos documentales y carga de archivos | UC-029, UC-030 | `TipoDocumentosController`, `RequisitosDocumentosController`, `DocumentosAlumnoController`, `FileUploadController` | `tipo_documentos`, `requisitos_documentos`, `documentos_alumno` | `portal/matriculas/requisitos`, `uploadService` |
+| **RF-42 / RF-INT-01** | Integración RENIEC (consulta DNI) | UC-031 (CU-E02) | `ReniecController`, `DecolectaService` | Servicio externo Decolecta/RENIEC | `useReniec`, `reniec.service.ts` |
+| **RF-35, RF-43 / RF-REP-01, 02** | Reportes académicos y gerenciales del Backoffice | UC-017, UC-033 | `ReporteAcademicoController`, `PagoSuscripcionController` | Consultas agregadas multi-tabla | `backoffice/reportes` (7 vistas) |
+| **RF-44, RNF-01, RNF-06 / RF-ADM-03, RF-OPS-01** | SuperAdmins, registros, hash y aislamiento multi-tenancy | UC-003, UC-011, UC-024, UC-032 | `SuperAdminsController`, `RegistrosController`, `UtilsController`, `TenantContext`, `TenantInterceptor` | `super_admins`, `registros` | `backoffice/usuarios` |
+
+> **Nota:** El módulo de Asistente IA (Chatbot / Ollama) fue descartado de la versión activa y su código fuente fue resguardado en `chatbot_archivado/` para posible reactivación futura.
 
 ---
 

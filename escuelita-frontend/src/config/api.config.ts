@@ -142,9 +142,6 @@ export const API_ENDPOINTS = {
     DEUDAS_ALUMNO: '/restful/deudasalumno',
     METODOS_PAGO: '/restful/metodospago',
     PAGOS: '/restful/pagoscaja',
-
-    // ===== CHATBOT / IA =====
-    CHATBOT: '/api/chatbot/preguntar',
 };
 
 // Configuración adicional

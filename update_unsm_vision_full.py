@@ -275,7 +275,7 @@ def generate_complete_document():
         "\"Consolidar al Sistema Integral de Administración Escolar (SIAE) como la plataforma tecnológica SaaS (Software as a Service) "
         "de referencia en el ecosistema educativo peruano para la administración de centros escolares de primaria. El sistema destacará "
         "por su arquitectura modular de alto rendimiento, su riguroso modelo de seguridad basado en roles (RBAC) y criptografía adaptativa, su "
-        "capacidad analítica con soporte de inteligencia artificial y su interoperabilidad fluida con entidades externas (RENIEC y formatos "
+        "capacidad analítica gerencial y su interoperabilidad fluida con entidades externas (RENIEC y formatos "
         "oficiales del MINEDU), permitiendo a las instituciones operar con cero papel, máxima eficiencia operativa y total satisfacción de las familias usuarias.\"",
         italic=True, space_after=8
     )
@@ -384,7 +384,89 @@ def generate_complete_document():
 
         doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    # RNF-01 al RNF-05
+    # RF-38 al RF-44 (Requerimientos incorporados tras auditoria del codigo real: SaaS, RENIEC, Expediente y Reportes Backoffice)
+    rf_extra_list = [
+        ("RF-38", "Gestión de Suscripciones SaaS, Planes y Ciclos de Facturación", "SuperAdmin",
+         "Se necesita administrar el ciclo de vida de suscripciones institucionales, planes contratados, estados y ciclos de facturación para operar el modelo SaaS.",
+         "El sistema deberá permitir crear, consultar, actualizar y cancelar suscripciones institucionales, mantener los catálogos de planes, estados y ciclos de facturación, generar cronogramas de pagos y actualizar automáticamente la vigencia diaria mediante planificador.",
+         "Cada institución puede tener una suscripción activa vigente; si la suscripción vence o se cancela, el acceso de sus sedes queda bloqueado automáticamente.",
+         "Dado que el SuperAdmin crea o renueva una suscripción con plan válido, cuando se activa, entonces los usuarios de la institución pueden autenticarse y se genera el cronograma de pagos."),
+
+        ("RF-39", "Gestión de Sedes y Límites de Cupo por Suscripción", "SuperAdmin",
+         "Se necesita controlar la cantidad de sedes habilitadas y distribuir límites de alumnos/recursos por sede según el plan contratado.",
+         "El sistema deberá permitir registrar sedes por institución y asignar límites de capacidad por suscripción de forma equitativa o personalizada.",
+         "La suma de límites asignados a las sedes no puede superar el límite total permitido por el plan de la suscripción activa.",
+         "Dado que una institución cuenta con múltiples sedes, cuando el SuperAdmin aplica distribución equitativa o personalizada, entonces cada sede refleja su límite vigente."),
+
+        ("RF-40", "Gestión y Verificación de Pagos de Suscripción", "SuperAdmin / Tesorería",
+         "Se necesita registrar y auditar los pagos de suscripción con evidencia documental para controlar la cobranza SaaS.",
+         "El sistema deberá permitir registrar pagos de suscripción adjuntando comprobantes, actualizar comprobantes, listar pagos pendientes, verificar o rechazar pagos y consultar estadísticas de recaudación.",
+         "Todo pago de suscripción registrado pasa por revisión y solo puede ser verificado o rechazado por un SuperAdmin autorizado.",
+         "Dado que se registra un pago con comprobante válido, cuando el SuperAdmin lo verifica, entonces el pago queda aprobado y se reflejan las estadísticas actualizadas."),
+
+        ("RF-41", "Gestión de Requisitos Documentales, Expediente del Alumno y Carga de Archivos", "Admin / Secretaría",
+         "Se necesita definir los documentos exigidos por la institución y almacenar digitalmente los archivos del expediente escolar y avatares.",
+         "El sistema deberá permitir administrar tipos de documento y requisitos documentales, registrar documentos presentados por cada alumno y subir archivos generales, documentos y avatares mediante carga multipart.",
+         "Los archivos cargados deben cumplir con los formatos y tamaños permitidos por el servidor antes de persistirse.",
+         "Dado que secretaría carga un documento obligatorio para un alumno, cuando se guarda, entonces el archivo queda almacenado y vinculado al expediente del alumno."),
+
+        ("RF-42", "Consulta de Identidad por DNI mediante Integración RENIEC", "Admin / Secretaría / Proveedor RENIEC",
+         "Se necesita autocompletar los datos de identidad de alumnos, apoderados y administradores consultando el DNI para reducir errores de digitación.",
+         "El sistema deberá consultar el servicio externo de identidad RENIEC (vía Decolecta) a partir de un DNI de 8 dígitos y devolver nombres y apellidos para precargar formularios.",
+         "El DNI debe tener exactamente 8 dígitos numéricos; si el servicio externo falla o no responde, el usuario puede continuar con el ingreso manual.",
+         "Dado que el usuario ingresa un DNI válido y solicita la consulta, cuando el servicio RENIEC responde, entonces el formulario se autocompleta con los datos oficiales."),
+
+        ("RF-43", "Reportes Gerenciales y Analítica del Backoffice SuperAdmin", "SuperAdmin",
+         "Se necesita consolidar métricas globales de operación, uso del sistema, ingresos, salud comercial y rendimiento académico para la toma de decisiones.",
+         "El sistema deberá ofrecer un módulo de reportes gerenciales en el backoffice con vistas de estadísticas generales, uso del sistema, ingresos, salud comercial, pagos de suscripción, alumnos y reporte académico consolidado.",
+         "El acceso a reportes globales del backoffice está restringido exclusivamente al rol SuperAdmin.",
+         "Dado que el SuperAdmin accede al módulo de reportes y aplica filtros, cuando se consultan las métricas, entonces se visualizan los indicadores y tablas consolidadas actualizadas."),
+
+        ("RF-44", "Gestión de Cuentas SuperAdmin y Trazabilidad Operativa", "SuperAdmin",
+         "Se necesita administrar las cuentas con privilegios globales y mantener registros operativos de soporte.",
+         "El sistema deberá permitir el registro y mantenimiento CRUD de cuentas SuperAdmin (con cifrado BCrypt) y la gestión de registros operativos y emisión de tokens técnicos.",
+         "Solo usuarios SuperAdmin autenticados pueden crear o administrar otras cuentas SuperAdmin.",
+         "Dado que un SuperAdmin registra una nueva cuenta administrativa con datos válidos, cuando guarda, entonces la cuenta queda persistida con contraseña cifrada y operativa.")
+    ]
+
+    for (rf_id, rf_name, rf_actor, rf_need, rf_req, rf_rule, rf_crit) in rf_extra_list:
+        new_tbl = doc.add_table(rows=7, cols=2)
+        new_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        set_tbl_borders(new_tbl, color="CBD5E1")
+        rows_data = [
+            ("1. ID del requisito", rf_id),
+            ("2. Nombre del requisito", rf_name),
+            ("3. Stakeholder / Actor", rf_actor),
+            ("4. Necesidad identificada", rf_need),
+            ("5. Requisito funcional", rf_req),
+            ("6. Regla o condición", rf_rule),
+            ("7. Criterio de aceptación", rf_crit)
+        ]
+        for r_idx, (k, v) in enumerate(rows_data):
+            row = new_tbl.rows[r_idx]
+            c0, c1 = row.cells[0], row.cells[1]
+            c0.width = col_w_req[0]
+            c1.width = col_w_req[1]
+            set_cell_padding(c0, top=55, bottom=55, left=75, right=75)
+            set_cell_padding(c1, top=55, bottom=55, left=75, right=75)
+            p0 = c0.paragraphs[0]
+            r0 = p0.add_run(k)
+            r0.font.name = "Calibri"
+            r0.font.size = Pt(9.0)
+            r0.font.bold = True
+            r0.font.color.rgb = DARK
+            p1 = c1.paragraphs[0]
+            r1 = p1.add_run(v)
+            r1.font.name = "Calibri"
+            r1.font.size = Pt(9.0)
+            if r_idx == 0:
+                r1.font.bold = True
+                r1.font.color.rgb = NAVY
+            else:
+                r1.font.color.rgb = DARK
+        doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
+    # RNF-01 al RNF-06
     rnf_list = [
         ("RNF-01", "Autenticación, control RBAC y cifrado de contraseñas", "Todos los usuarios",
          "Proteger la privacidad de los datos escolares y restringir acciones según el rol asignado.",
@@ -414,7 +496,13 @@ def generate_complete_document():
          "Consultar notas, asistencias y recibos desde computadoras de escritorio, laptops, tablets o smartphones.",
          "Las interfaces del sistema deberán adaptar sus pantallas de manera responsiva a anchos desde 360px (smartphones) hasta 1920px (escritorio).",
          "La vista de consulta de apoderados y el registro de asistencia docente deben ser 100 % operables sin desplazamiento horizontal forzado.",
-         "Renderizado correcto y funcional verificado en navegadores Chrome, Edge y Firefox en resoluciones móviles y de escritorio.")
+         "Renderizado correcto y funcional verificado en navegadores Chrome, Edge y Firefox en resoluciones móviles y de escritorio."),
+
+        ("RNF-06", "Aislamiento multi-tenancy por sede y control automático de vigencia", "Todos los usuarios / Operaciones",
+         "Evitar que usuarios de una sede visualicen o modifiquen datos de otra sede y asegurar la actualización automática del estado de suscripciones.",
+         "El sistema deberá aislar todas las consultas y operaciones de escuela mediante contexto de sede (TenantContext / TenantInterceptor) extraído del token JWT, y ejecutar un proceso programado diario (SuscripcionScheduler) para actualizar suscripciones vencidas o renovadas.",
+         "Solo el perfil SuperAdmin puede acceder de forma transversal a todas las sedes; el planificador se ejecuta diariamente a las 02:00 hrs.",
+         "Pruebas de integración confirman que un usuario de Sede A no puede leer ni modificar registros de Sede B y que una suscripción vencida bloquea el inicio de sesión.")
     ]
 
     for (rnf_id, rnf_name, rnf_actor, rnf_need, rnf_req, rnf_rule, rnf_crit) in rnf_list:
@@ -521,9 +609,10 @@ def generate_complete_document():
     add_bullet_item(" Conceptos de pago, deudas, control de caja (apertura/arqueo/cierre), métodos de pago (efectivo, Yape, transferencia) y recibos electrónicos.", "Módulo de Tesorería y Finanzas:")
     add_bullet_item(" Planes, ciclos de facturación institucional y pagos de suscripción escolar.", "Sistema de suscripciones SaaS:")
     add_bullet_item(" Consulta y autocompletado de datos de identidad por DNI vía servicio web REST.", "Integración con servicio RENIEC:")
-    add_bullet_item(" Asistente conversacional inteligente para consultas académicas en lenguaje natural directivas.", "Agente Inteligente IA:")
+    add_bullet_item(" Paneles consolidados de estadísticas, uso, ingresos, salud comercial, pagos de suscripción, alumnos y rendimiento académico.", "Reportes Gerenciales Backoffice:")
 
     add_sub_heading("8.2", "¿Qué queda fuera del alcance? (Excluido)")
+    add_bullet_item(" El módulo de asistente conversacional IA (Chatbot / Ollama) ha sido descartado de la versión activa; su lógica fuente queda resguardada en la carpeta chatbot_archivado/ para una eventual evaluación futura.", "Asistente Conversacional IA (Chatbot):")
     add_bullet_item(" No se contempla la liquidación de sueldos, compensaciones laborales, CTS ni beneficios del personal.", "Gestión de planillas y recursos humanos:")
     add_bullet_item(" No incluye libros contables oficiales, balances tributarios SUNAT ni estados financieros mercantiles.", "Contabilidad general corporativa:")
     add_bullet_item(" El software no se conecta de forma directa a los servidores centrales del MINEDU; se limita a la exportación de reportes compatibles.", "Interoperabilidad directa con SIAGIE:")
@@ -633,8 +722,8 @@ def generate_complete_document():
         "en registros manuales y herramientas desarticuladas— generan duplicidad de datos, demoras operativas y falta de trazabilidad. "
         "El sistema está dirigido a cinco perfiles de usuario: SuperAdmin, Administrador de sede, Docentes, Personal de Tesorería y Apoderados (consulta). "
         "Su alcance abarca seis módulos funcionales (Seguridad, Infraestructura Académica, Gestión Docente, Matrícula, Control y Evaluación, y Tesorería) "
-        "más un sistema SaaS de suscripciones, integración con servicio RENIEC para validación de DNI y soporte de consultas analíticas mediante IA. "
-        "Quedan excluidos la gestión de planillas, la contabilidad general corporativa y la interoperabilidad directa en tiempo real con SIAGIE."
+        "más un sistema SaaS de suscripciones, integración con servicio RENIEC para validación de DNI y reportes gerenciales de backoffice. "
+        "Quedan excluidos el asistente conversacional IA (descartado y archivado para evaluación futura), la gestión de planillas, la contabilidad general corporativa y la interoperabilidad directa en tiempo real con SIAGIE."
     )
 
     # =========================================================================
@@ -726,10 +815,10 @@ def generate_complete_document():
         ("10", "RENIEC", "Registro Nacional de Identificación y Estado Civil del Perú; entidad pública que gestiona el DNI y los datos de identidad ciudadana.", "Entidad externa", "Registro civil", "Integrado vía API REST para validación de DNI"),
         ("11", "SIAGIE", "Sistema de Información de Apoyo a la Gestión de la Institución Educativa; portal oficial del MINEDU para actas y consolidados.", "Entidad externa", "Portal MINEDU", "Destino de exportación de reportes oficiales"),
         ("12", "SRS", "Software Requirements Specification; especificación formal de requerimientos de software según el estándar IEEE Std 830.", "Ingeniería de software", "Documento de requisitos", "Línea base técnica para el análisis del sistema"),
-        ("13", "RF", "Requerimiento Funcional; declaración de una función o servicio que el software debe proveer en respuesta a estímulos del usuario.", "Ingeniería de software", "Requisito funcional", "Identificados del RF-01 al RF-37"),
-        ("14", "RNF", "Requerimiento No Funcional; restricción técnica o atributo de calidad (rendimiento, seguridad, disponibilidad) que el sistema debe cumplir.", "Ingeniería de software", "Atributo de calidad", "Incluye tiempo de respuesta < 2s y cifrado BCrypt"),
-        ("15", "CU / UC", "Caso de Uso (Use Case); técnica de modelado UML que describe la interacción entre actores y el sistema para un objetivo concreto.", "Modelado UML", "Historia de uso", "Modelados formalmente desde CU-E01 a CU-E07"),
-        ("16", "Chatbot IA", "Asistente inteligente conversacional integrado que traduce preguntas en lenguaje natural a consultas seguras sobre la base de datos.", "Tecnología / IA", "Asistente virtual", "Integrado vía API REST /api/chatbot/preguntar"),
+        ("13", "RF", "Requerimiento Funcional; declaración de una función o servicio que el software debe proveer en respuesta a estímulos del usuario.", "Ingeniería de software", "Requisito funcional", "Identificados del RF-01 al RF-44"),
+        ("14", "RNF", "Requerimiento No Funcional; restricción técnica o atributo de calidad (rendimiento, seguridad, disponibilidad) que el sistema debe cumplir.", "Ingeniería de software", "Atributo de calidad", "Identificados del RNF-01 al RNF-06 (incluye BCrypt, JWT, < 2s y multi-tenancy)"),
+        ("15", "CU / UC", "Caso de Uso (Use Case); técnica de modelado UML que describe la interacción entre actores y el sistema para un objetivo concreto.", "Modelado UML", "Historia de uso", "Núcleo CU-E01 a CU-E07 y catálogo extendido UC-001 a UC-034"),
+        ("16", "Multi-Tenancy", "Arquitectura que permite atender a múltiples instituciones y sedes desde una misma aplicación aislando sus datos lógicamente.", "Arquitectura", "Aislamiento por sede", "Implementado mediante TenantContext y TenantInterceptor"),
         ("17", "Sede Escolar", "Ubicación geográfica e inmueble físico en el que opera la institución educativa, albergando aulas y oficinas.", "Dominio", "Filial, local", "Soporta Sede Central y Sedes Anexas"),
         ("18", "Año Escolar", "Configuración del calendario lectivo vigente, dividido administrativamente en bimestres o trimestres con fechas oficiales.", "Dominio", "Periodo académico", "Debe estar activo para apertura de matrículas"),
         ("19", "Ficha Multisección", "Legajo digital del estudiante que reúne antecedentes filiales, contactos de emergencia, ficha de salud, alergias y observaciones.", "Dominio", "Expediente digital", "Sustituye el archivo en papel"),
@@ -917,10 +1006,10 @@ def generate_complete_document():
     # 15.7 Tesorería
     add_sub_heading("15.7", "Módulo de tesorería y finanzas")
     add_body_p(
-        "La Figura 7 contiene los casos CU-E06 Apertura y Cierre de Caja, CU-E07 Registrar Cobro de Aranceles, UC-031 Emitir Recibo "
-        "Electrónico PDF, UC-033 Consultar Deudas y Estado de Cuenta, y UC-034 Portal de Consulta Apoderado. El personal de caja apertura la jornada, "
-        "procesa pagos por aranceles escolares y el sistema emite automáticamente el recibo electrónico en PDF («include»). Los apoderados pueden "
-        "consultar deudas y descargar sus recibos mediante la interfaz web familiar de solo lectura."
+        "La Figura 7 agrupa los casos del módulo financiero: UC-025 Gestionar Conceptos y Métodos de Pago, CU-E06 (UC-027) Registrar Pago en Caja "
+        "y Detalle, CU-E07 (UC-026) Consultar y Gestionar Deudas del Alumno, así como los casos proyectados de Apertura/Cierre de Caja (RF-32), "
+        "Emisión de Recibo Electrónico PDF y Portal de Consulta Apoderado (RF-37). El personal de tesorería configura aranceles, liquida deudas "
+        "mediante distintos métodos de pago y actualiza en tiempo real el estado de cuenta del estudiante."
     )
     fig7_file = os.path.join(DOCS_DIR, "fig7_tesoreria.png")
     if os.path.exists(fig7_file):
@@ -935,6 +1024,16 @@ def generate_complete_document():
         rc7.font.size = Pt(8.5)
         rc7.font.italic = True
         rc7.font.color.rgb = MUTED
+
+    # 15.8 Módulo SaaS de suscripciones y reportes gerenciales
+    add_sub_heading("15.8", "Módulo SaaS de suscripciones y reportes gerenciales")
+    add_body_p(
+        "Complementando los seis módulos escolares, el sistema implementa capacidades transversales y de Backoffice SuperAdmin: "
+        "UC-006 Gestionar Sedes y Límites por Suscripción, UC-008 Gestionar Suscripciones, UC-009 Gestionar Catálogos de Suscripción (planes, "
+        "estados y ciclos de facturación), UC-010 Gestionar y Verificar Pagos de Suscripción, UC-033 Consultar Reportes Gerenciales del Backoffice "
+        "(estadísticas, uso, ingresos, salud comercial, pagos y alumnos) y UC-034 Validar y Actualizar Vigencia de Suscripciones mediante proceso "
+        "automático diario."
+    )
 
     # =========================================================================
     # 16. ESPECIFICACIONES DETALLADAS DE CASOS DE USO
@@ -1222,6 +1321,54 @@ def generate_complete_document():
                 "Las calificaciones y promedios ponderados quedan consolidados en la base de datos.",
                 "Las libretas y consolidados para apoderados y SIAGIE quedan actualizados."
             ]
+        },
+        {
+            "id": "UC-008",
+            "name": "Gestionar Suscripciones y Pagos SaaS",
+            "req": "RF-38, RF-39, RF-40 / RF-SUS-02..05",
+            "actors": "Primario: SuperAdmin. Secundarios: SuscripcionScheduler, SuscripcionValidator, Base de Datos MySQL.",
+            "goal": "Administrar planes, ciclos de facturación, suscripciones institucionales, límites por sede y verificación de comprobantes de pago.",
+            "pre": [
+                "El usuario está autenticado con perfil SuperAdmin.",
+                "La institución educativa y los catálogos de planes/ciclos están registrados."
+            ],
+            "main_flow": [
+                "1. El SuperAdmin selecciona la institución y crea o actualiza su suscripción eligiendo plan y ciclo de facturación.",
+                "2. El sistema distribuye los límites de cupo por sede (equitativa o personalizada) y genera el cronograma de pagos.",
+                "3. Al registrarse un pago con comprobante, el SuperAdmin revisa la bandeja de pendientes y verifica o rechaza el pago.",
+                "4. El proceso automático diario (UC-034, 02:00 AM) actualiza a 'Vencida' las suscripciones expiradas y reactiva las renovadas."
+            ],
+            "alt_flows": [
+                ("Flujo alternativo A1 — Exceso de límites de sede:", "En el paso 2, la suma de límites supera lo permitido por el plan. El sistema rechaza el cambio con HTTP 400."),
+                ("Flujo alternativo A2 — Comprobante rechazado o suscripción vencida:", "Si un comprobante es inválido se rechaza con motivo; si la suscripción vence, el login de todas las sedes de la institución queda bloqueado.")
+            ],
+            "post": [
+                "La suscripción, los límites por sede y el estado de cobranza quedan actualizados.",
+                "El acceso operativo de las sedes refleja en tiempo real la vigencia de la suscripción."
+            ]
+        },
+        {
+            "id": "UC-033",
+            "name": "Consultar Reportes Gerenciales del Backoffice",
+            "req": "RF-35, RF-43 / RF-REP-01, RF-REP-02",
+            "actors": "Primario: SuperAdmin. Secundario: Base de Datos MySQL.",
+            "goal": "Visualizar y analizar indicadores globales del ecosistema escolar (estadísticas, uso, ingresos, salud comercial, pagos de suscripción, alumnos y reporte académico).",
+            "pre": [
+                "El usuario está autenticado con rol SuperAdmin en el backoffice (/admin/reportes/*).",
+                "Existen datos transaccionales registrados en las instituciones y sedes."
+            ],
+            "main_flow": [
+                "1. El SuperAdmin selecciona una de las 7 vistas de reportes gerenciales en el menú lateral.",
+                "2. El usuario aplica filtros de institución, sede, rango de fechas o estado.",
+                "3. El sistema consulta los endpoints consolidados del backend y procesa las métricas.",
+                "4. El sistema despliega gráficos, KPIs y tablas descargables."
+            ],
+            "alt_flows": [
+                ("Flujo alternativo A1 — Sin registros en el periodo:", "En el paso 3, si no existen registros para los filtros seleccionados, el sistema muestra una vista vacía informativa sin error.")
+            ],
+            "post": [
+                "Los indicadores gerenciales quedan disponibles para análisis y toma de decisiones sin modificar datos."
+            ]
         }
     ]
 
@@ -1280,6 +1427,70 @@ def generate_complete_document():
                 add_body_p(f_desc, bold_prefix=f"{f_title} ", space_after=2)
 
         doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+    # 16.1 Matriz de Trazabilidad Completa (RF/RNF <-> UC/CU-E <-> Estado en Codigo)
+    add_sub_heading("16.1", "Matriz de trazabilidad completa (Requerimientos ↔ Casos de Uso ↔ Implementación)")
+    add_body_p(
+        "La siguiente matriz vincula todos los requerimientos funcionales activos (RF-01 al RF-44) y no funcionales (RNF-01 al RNF-06) "
+        "con sus casos de uso unificados (UC-001 al UC-034 y equivalentes CU-E01 al CU-E07) e indica su estado real en el proyecto "
+        "(el módulo Chatbot IA fue descartado de esta versión y archivado en chatbot_archivado/):"
+    )
+
+    trace_data = [
+        ("Requerimientos (SRS)", "Casos de Uso (UC / CU-E)", "Módulo / Alcance", "Estado en Código Real"),
+        ("RF-01, RNF-01", "UC-001, UC-002, UC-032", "Seguridad: Login Admin/Escuela, JWT, BCrypt", "Implementado ✅"),
+        ("RF-02, RF-05", "UC-002* (Proyectado)", "Recuperación de contraseña y perfil propio", "Pendiente (Doc) ⏳"),
+        ("RF-03, RF-04", "UC-004, UC-005", "Usuarios, Roles y Matriz RBAC por módulos", "Implementado ✅"),
+        ("RF-06", "UC-006, UC-007", "Configuración de Institución y Sedes", "Implementado ✅"),
+        ("RF-07, RF-08, RF-09", "UC-012, UC-013", "Año Escolar, Periodos, Grados, Secciones y Aulas", "Implementado ✅"),
+        ("RF-10, RF-11", "UC-014, UC-022", "Áreas, Cursos, Especialidades, Malla y Horarios", "Implementado ✅"),
+        ("RF-12, RF-13", "UC-018, UC-019 (CU-E01, CU-E03)", "Alumnos, Apoderados y vínculo Alumno-Apoderado", "Implementado ✅"),
+        ("RF-14", "UC-020 (CU-E04, CU-E05)", "Matrículas, verificación de vacantes y pago", "Implementado ✅"),
+        ("RF-15", "UC-028", "Movimientos del alumno (traslados/retiros)", "Parcial (Backend+FE sin ruta) ⚠️"),
+        ("RF-16, RF-17", "UC-023", "Perfil Docente y Asignación Académica", "Implementado ✅"),
+        ("RF-18, RF-19, RF-20", "Proyectados (Fase 2)", "Mis Cursos, Reporte Docente y Avance de Sílabo", "Pendiente (Doc) ⏳"),
+        ("RF-21, RF-24..RF-27", "UC-021", "Control, registro diario y reporte de asistencias", "Implementado ✅"),
+        ("RF-22, RF-23", "UC-015, UC-016", "Evaluaciones, Tipos de Nota, Calificaciones y Promedios", "Implementado ✅"),
+        ("RF-28, RF-29, RF-30", "UC-017 (parcial)", "Reporte académico; Boleta PDF y Certificados", "Parcial (sin PDF/Certif.) ⚠️"),
+        ("RF-31, RF-33, RF-36", "UC-025, UC-026, UC-027 (CU-E06, CU-E07)", "Conceptos, Métodos de Pago, Deudas y Pagos en Caja", "Implementado ✅"),
+        ("RF-32, RF-34, RF-37", "Proyectados (Fase 2)", "Apertura/Cierre Caja, Gastos y Portal Apoderado", "Pendiente (Doc) ⏳"),
+        ("RF-35, RF-43", "UC-017, UC-033", "Reportes Gerenciales Backoffice (7 vistas) y Académico", "Implementado ✅"),
+        ("RF-38, RF-39, RF-40", "UC-006, UC-008, UC-009, UC-010, UC-034", "SaaS: Suscripciones, Planes, Límites, Pagos y CronJob", "Implementado ✅"),
+        ("RF-41", "UC-029, UC-030", "Requisitos documentales, Expediente y Carga de Archivos", "Implementado ✅"),
+        ("RF-42", "UC-031 (CU-E02)", "Consulta de identidad por DNI vía RENIEC (Decolecta)", "Implementado ✅"),
+        ("RF-44", "UC-003, UC-011, UC-024", "Gestión de SuperAdmins y Registros Operativos", "Implementado ✅"),
+        ("RNF-02..RNF-06", "Transversales (UC-001..UC-034)", "Disponibilidad, Rendimiento, Concurrencia, Multi-Tenancy", "Implementado ✅")
+    ]
+
+    t_tr = doc.add_table(rows=len(trace_data), cols=4)
+    t_tr.alignment = WD_TABLE_ALIGNMENT.CENTER
+    set_tbl_borders(t_tr, color="94A3B8")
+    tr_widths = [Inches(1.3), Inches(1.6), Inches(2.2), Inches(1.4)]
+
+    for r_idx, row_vals in enumerate(trace_data):
+        row = t_tr.rows[r_idx]
+        is_hdr = (r_idx == 0)
+        for c_idx, val in enumerate(row_vals):
+            cell = row.cells[c_idx]
+            cell.width = tr_widths[c_idx]
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            set_cell_padding(cell, top=50, bottom=50, left=60, right=60)
+            if is_hdr:
+                set_cell_bg(cell, "1B365D")
+            elif r_idx % 2 == 1:
+                set_cell_bg(cell, "F8FAFC")
+            p = cell.paragraphs[0]
+            p.paragraph_format.line_spacing = 1.15
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            r = p.add_run(val)
+            r.font.name = "Calibri"
+            r.font.size = Pt(8.0) if not is_hdr else Pt(8.5)
+            if is_hdr:
+                r.font.bold = True
+                r.font.color.rgb = RGBColor(255, 255, 255)
+            else:
+                r.font.color.rgb = DARK
 
     # =========================================================================
     # 17. VALIDACIONES DEL SISTEMA Y REGLAS DE NEGOCIO
