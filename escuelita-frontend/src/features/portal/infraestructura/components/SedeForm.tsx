@@ -1,6 +1,7 @@
 import { Building2, MapPin, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { escuelaAuthService } from '../../../../services/escuelaAuth.service';
+import { obtenerSedePorId } from '../api/infraestructuraApi';
 import type { Sede, SedeDTO } from '../types';
 
 interface SedeFormProps {
@@ -12,8 +13,7 @@ interface SedeFormProps {
 
 const SedeForm: React.FC<SedeFormProps> = ({ sede, onSubmit, onCancel, isLoading = false }) => {
     const sedeId = escuelaAuthService.getSedeId();
-    const currentUser = escuelaAuthService.getCurrentUser();
-    const institucionId = currentUser?.sede?.idInstitucion?.idInstitucion || 0;
+    const [institucionId, setInstitucionId] = useState<number>(sede?.idInstitucion?.idInstitucion || 0);
 
     const [activeTab, setActiveTab] = useState<'basica' | 'ubicacion'>('basica');
     const [formData, setFormData] = useState<SedeDTO>({
@@ -26,11 +26,25 @@ const SedeForm: React.FC<SedeFormProps> = ({ sede, onSubmit, onCancel, isLoading
         telefono: '',
         correoInstitucional: '',
         idSede: sedeId || 0,
-        idInstitucion: institucionId
+        idInstitucion: sede?.idInstitucion?.idInstitucion || 0
     });
 
     useEffect(() => {
+        if (!sede && sedeId) {
+            obtenerSedePorId(sedeId)
+                .then((sedeActual) => {
+                    const instId = sedeActual?.idInstitucion?.idInstitucion || 0;
+                    setInstitucionId(instId);
+                    setFormData(prev => ({ ...prev, idInstitucion: instId }));
+                })
+                .catch(() => {});
+        }
+    }, [sede, sedeId]);
+
+    useEffect(() => {
         if (sede) {
+            const instId = sede.idInstitucion?.idInstitucion || institucionId;
+            setInstitucionId(instId);
             setFormData({
                 idSede: sede.idSede,
                 nombreSede: sede.nombreSede,
@@ -41,10 +55,10 @@ const SedeForm: React.FC<SedeFormProps> = ({ sede, onSubmit, onCancel, isLoading
                 ugel: sede.ugel || '',
                 telefono: sede.telefono || '',
                 correoInstitucional: sede.correoInstitucional || '',
-                idInstitucion: sede.idInstitucion?.idInstitucion || institucionId
+                idInstitucion: instId
             });
         }
-    }, [sede]);
+    }, [sede, institucionId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

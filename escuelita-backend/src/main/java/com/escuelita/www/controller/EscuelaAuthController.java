@@ -37,13 +37,15 @@ public class EscuelaAuthController {
             Map<String, String> error = new HashMap<>();
             
             // Mensajes de error más específicos
-            String mensaje = e.getMessage();
+            String mensaje = e.getMessage() != null ? e.getMessage() : "";
             if (mensaje.contains("Usuario no encontrado")) {
                 error.put("mensaje", "Usuario no encontrado");
             } else if (mensaje.contains("Usuario inactivo")) {
                 error.put("mensaje", "Usuario inactivo. Contacte al administrador");
             } else if (mensaje.contains("sin sede")) {
                 error.put("mensaje", "Usuario sin sede asignada. Contacte al administrador");
+            } else if (mensaje.contains("ACCESO DENEGADO") || mensaje.contains("suscripción") || mensaje.contains("pagos")) {
+                error.put("mensaje", mensaje);
             } else {
                 error.put("mensaje", "Usuario o contraseña incorrectos");
             }

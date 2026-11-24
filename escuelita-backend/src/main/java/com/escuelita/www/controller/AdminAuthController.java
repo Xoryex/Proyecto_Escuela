@@ -19,6 +19,7 @@ import com.escuelita.www.entity.LoginResponse;
 import com.escuelita.www.entity.SuperAdmins;
 import com.escuelita.www.repository.SuperAdminsRepository;
 import com.escuelita.www.service.jpa.AdminAuthService;
+import com.escuelita.www.util.TenantContext;
 
 @RestController
 @RequestMapping("/auth/admin")
@@ -50,6 +51,10 @@ public class AdminAuthController {
     // Endpoint: POST /auth/admin/register
     @PostMapping("/register")
     public ResponseEntity<?> registerSuperAdmin(@RequestBody Map<String, String> request) {
+        if (!TenantContext.isSuperAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("mensaje", "Solo un SuperAdmin autenticado puede registrar nuevos SuperAdmins"));
+        }
         try {
             // Validar que existan los campos requeridos
             if (!request.containsKey("nombres") || !request.containsKey("apellidos") ||

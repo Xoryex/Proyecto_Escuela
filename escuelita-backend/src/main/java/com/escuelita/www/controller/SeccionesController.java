@@ -84,6 +84,7 @@ public class SeccionesController {
         return ResponseEntity.ok(serviceSecciones.modificar(secciones));
     }
     @GetMapping("/secciones/{id}")
+    @RequireModulo(3)  // 3 = Módulo INFRAESTRUCTURA
     public Optional<Secciones> buscarId(@PathVariable("id") Long id){
         return serviceSecciones.buscarId(id);
     }

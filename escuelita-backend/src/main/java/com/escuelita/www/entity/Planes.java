@@ -2,6 +2,8 @@
 
 package com.escuelita.www.entity;
 
+import java.math.BigDecimal;
+
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -23,10 +25,10 @@ public class Planes {
     @Column(name = "nombre_plan")
     private String nombrePlan;
     private String descripcion;
-    @Column(name = "precio_mensual")
-    private Double precioMensual;
-    @Column(name = "precio_anual")
-    private Double precioAnual;
+    @Column(name = "precio_mensual", precision = 10, scale = 2)
+    private BigDecimal precioMensual;
+    @Column(name = "precio_anual", precision = 10, scale = 2)
+    private BigDecimal precioAnual;
     @Column(name = "limite_alumnos")
     private Integer limiteAlumnos;
     @Column(name = "limite_sedes")
@@ -60,16 +62,16 @@ public class Planes {
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
-    public Double getPrecioMensual() {
+    public BigDecimal getPrecioMensual() {
         return precioMensual;
     }
-    public void setPrecioMensual(Double precioMensual) {
+    public void setPrecioMensual(BigDecimal precioMensual) {
         this.precioMensual = precioMensual;
     }
-    public Double getPrecioAnual() {
+    public BigDecimal getPrecioAnual() {
         return precioAnual;
     }
-    public void setPrecioAnual(Double precioAnual) {
+    public void setPrecioAnual(BigDecimal precioAnual) {
         this.precioAnual = precioAnual;
     }
     public Integer getLimiteAlumnos() {

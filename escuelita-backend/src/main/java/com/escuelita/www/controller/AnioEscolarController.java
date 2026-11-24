@@ -72,6 +72,7 @@ public class AnioEscolarController {
         return ResponseEntity.ok(serviceAnioEscolar.modificar(anioEscolar));
     }
     @GetMapping("/anioescolar/{id}")
+    @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public Optional<AnioEscolar> buscarId(@PathVariable("id") Long id){ 
         return serviceAnioEscolar.buscarId(id);
     }

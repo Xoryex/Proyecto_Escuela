@@ -74,12 +74,12 @@ const PromediosPage: React.FC = () => {
   const promediosCalculados = useMemo(() => {
     const grupos = new Map<string, { califs: Calificaciones[], key: string }>();
 
-    calificaciones.forEach((calif) => {
+    (Array.isArray(calificaciones) ? calificaciones : []).forEach((calif) => {
       const evalu = (calif as any).idEvaluacion;
-      const idAsig = typeof evalu === 'object' && evalu.idAsignacion 
+      const idAsig = evalu && typeof evalu === 'object' && evalu.idAsignacion 
         ? (typeof evalu.idAsignacion === 'object' ? evalu.idAsignacion.idAsignacion : evalu.idAsignacion)
         : null;
-      const idPer = typeof evalu === 'object' && evalu.idPeriodo
+      const idPer = evalu && typeof evalu === 'object' && evalu.idPeriodo
         ? (typeof evalu.idPeriodo === 'object' ? evalu.idPeriodo.idPeriodo : evalu.idPeriodo)
         : null;
 
@@ -93,10 +93,10 @@ const PromediosPage: React.FC = () => {
     const resultado: PromedioCalculado[] = Array.from(grupos.values()).map((grupo) => {
       const primera = grupo.califs[0];
       const evalu = (primera as any).idEvaluacion;
-      const idAsig = typeof evalu === 'object' && evalu.idAsignacion
+      const idAsig = evalu && typeof evalu === 'object' && evalu.idAsignacion
         ? (typeof evalu.idAsignacion === 'object' ? evalu.idAsignacion.idAsignacion : evalu.idAsignacion)
         : null;
-      const idPer = typeof evalu === 'object' && evalu.idPeriodo
+      const idPer = evalu && typeof evalu === 'object' && evalu.idPeriodo
         ? (typeof evalu.idPeriodo === 'object' ? evalu.idPeriodo.idPeriodo : evalu.idPeriodo)
         : null;
       
@@ -112,7 +112,7 @@ const PromediosPage: React.FC = () => {
         idAsignacion: idAsig,
         idPeriodo: idPer,
         idAlumno: (primera as any).idMatricula?.idAlumno || primera.idMatricula,
-        idDocente: typeof evalu === 'object' && evalu.idAsignacion && typeof evalu.idAsignacion === 'object' 
+        idDocente: evalu && typeof evalu === 'object' && evalu.idAsignacion && typeof evalu.idAsignacion === 'object' 
           ? evalu.idAsignacion.idDocente 
           : null,
         notaPromedio: parseFloat(promedio.toFixed(2)),

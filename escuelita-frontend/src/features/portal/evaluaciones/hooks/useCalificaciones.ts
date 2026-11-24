@@ -19,13 +19,14 @@ export const useCalificaciones = () => {
 
   // Filtrar calificaciones según el rol del usuario
   const calificacionesFiltradas = useMemo(() => {
+    const listaSegura = Array.isArray(calificaciones) ? calificaciones : [];
     const usuarioActual = escuelaAuthService.getCurrentUser();
     const esProfesor = escuelaAuthService.isProfesor();
     const esAdministrador = usuarioActual?.rol?.nombreRol?.toUpperCase() === 'ADMINISTRADOR';
 
     // Si es profesor, mostrar solo sus calificaciones (filtradas por asignación de evaluación)
     if (esProfesor && !esAdministrador) {
-      return calificaciones.filter(calif => {
+      return listaSegura.filter(calif => {
         const evalu = (calif as any).idEvaluacion;
         const idAsignacion = typeof evalu === 'object' 
           ? evalu?.idAsignacion 
@@ -41,7 +42,7 @@ export const useCalificaciones = () => {
     }
 
     // Si es administrador, mostrar todas
-    return calificaciones;
+    return listaSegura;
   }, [calificaciones, idAsignacionesArray]);
 
   const cargarCalificaciones = async () => {
@@ -50,7 +51,7 @@ export const useCalificaciones = () => {
     try {
       // Obtiene SOLO calificaciones de tu sede (filtrado por JWT en backend)
       const data = await obtenerTodasCalificaciones();
-      setCalificaciones(data);
+      setCalificaciones(Array.isArray(data) ? data : []);
     } catch (err: any) {
       // Si el servidor retorna 500, mostrar mensaje informativo
       if (err.response?.status === 500) {

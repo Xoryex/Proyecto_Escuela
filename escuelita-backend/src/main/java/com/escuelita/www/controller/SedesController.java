@@ -34,6 +34,7 @@ import com.escuelita.www.repository.SedesRepository;
 import com.escuelita.www.repository.SuscripcionesRepository;
 import com.escuelita.www.service.ISedesService;
 import com.escuelita.www.security.RequireModulo;
+import com.escuelita.www.util.TenantContext;
 
 @RestController
 @RequestMapping("/restful")
@@ -134,8 +135,15 @@ public class SedesController {
         }
     }
     @GetMapping("/sedes/{id}")
-    @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public Optional<Sedes> buscarId(@PathVariable("id") Long id){ 
+        // Todo usuario autenticado de escuela puede leer su propia sede (dashboard/header);
+        // para consultar otras sedes se exige ser SUPER_ADMIN.
+        if (!TenantContext.isSuperAdmin()) {
+            Long miSede = TenantContext.getSedeId();
+            if (miSede == null || !miSede.equals(id)) {
+                throw new SecurityException("No tienes permiso para consultar otra sede");
+            }
+        }
         return serviceSedes.buscarId(id); 
     }
     @DeleteMapping("/sedes/{id}")

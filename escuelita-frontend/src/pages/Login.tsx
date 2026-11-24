@@ -21,22 +21,14 @@ const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const response = await adminAuthService.login(credentials);
-
-            const user = response.usuario;
-            const token =response.token;
-
-            if (window.location.pathname.startsWith("/os/admin/login")){
-            const userEncoded = encodeURIComponent(JSON.stringify(user));
-                window.location.href = `http://localhost:8001/?token=${token}&user=${userEncoded}`;
-            } else {
-                navigate('/admin/dashboard');
-            }
-        } catch (err: any) {
+            await adminAuthService.login(credentials);
+            navigate('/admin/dashboard');
+        } catch (err: unknown) {
             console.error('Error en login:', err);
-            if (err.response) {
-                setError(err.response.data?.mensaje || 'Usuario o contraseña incorrectos');
-            } else if (err.request) {
+            const axiosErr = err as { response?: { data?: { mensaje?: string } }; request?: unknown };
+            if (axiosErr.response) {
+                setError(axiosErr.response.data?.mensaje || 'Usuario o contraseña incorrectos');
+            } else if (axiosErr.request) {
                 setError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
             } else {
                 setError('Error inesperado. Intenta nuevamente.');

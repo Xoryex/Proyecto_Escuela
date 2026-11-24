@@ -1,9 +1,12 @@
 import axios from 'axios';
 import { adminAuthService } from '../services/adminAuth.service';
 import { escuelaAuthService } from '../services/escuelaAuth.service';
+// URL base centralizada de la API
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 // Configuración de la instancia de Axios para la API
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -66,7 +69,8 @@ api.interceptors.response.use(
         // No interceptar 401/403 en endpoints de autenticación (login)
         const isAuthEndpoint = requestUrl.includes('/auth/');
 
-        if (!isAuthEndpoint && (error.response?.status === 401 || error.response?.status === 403)) {
+        // Solo cerrar sesión en 401 (sesión inválida/expirada); 403 indica falta de permisos de módulo
+        if (!isAuthEndpoint && error.response?.status === 401) {
             localStorage.removeItem('escuela_token');
             localStorage.removeItem('escuela_user');
             localStorage.removeItem('admin_token');
@@ -74,8 +78,8 @@ api.interceptors.response.use(
 
             const currentPath = window.location.pathname;
 
-            if (currentPath.startsWith('/admin') || currentPath === '/login') {
-                window.location.href = '/login';
+            if (currentPath.startsWith('/admin')) {
+                window.location.href = '/admin/login';
             } else {
                 window.location.href = '/escuela/login';
             }

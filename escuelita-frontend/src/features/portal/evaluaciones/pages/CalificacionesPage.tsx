@@ -44,9 +44,9 @@ const CalificacionesPage: React.FC = () => {
     return 'N/A';
   };
 
-  const calificacionesFiltradas = calificaciones.filter(cal => {
-    const evaluacion = getEvaluacionDisplay(cal.idEvaluacion);
-    const matricula = getMatriculaDisplay(cal.idMatricula);
+  const calificacionesFiltradas = (Array.isArray(calificaciones) ? calificaciones : []).filter(cal => {
+    const evaluacion = String(getEvaluacionDisplay(cal.idEvaluacion));
+    const matricula = String(getMatriculaDisplay(cal.idMatricula));
     const nota = cal.notaObtenida?.toString() || '';
     
     const searchLower = searchTerm.toLowerCase();

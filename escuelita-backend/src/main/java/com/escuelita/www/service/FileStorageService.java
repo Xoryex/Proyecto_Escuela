@@ -54,21 +54,40 @@ public class FileStorageService {
             throw new IOException("Solo se permiten imágenes o archivos PDF");
         }
         
-        // Limpiar el nombre del archivo y agregar UUID para evitar duplicados
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        // Limpiar el nombre del archivo y validar extensión con lista blanca
+        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
         String extension = "";
         int dotIndex = originalFilename.lastIndexOf('.');
         if (dotIndex > 0) {
-            extension = originalFilename.substring(dotIndex);
+            extension = originalFilename.substring(dotIndex).toLowerCase();
         }
-        
+        if (!extension.matches("^\\.(jpg|jpeg|png|webp|gif|pdf)$")) {
+            throw new IOException("Extensión de comprobante no permitida: " + extension);
+        }
+
         String filename = UUID.randomUUID().toString() + extension;
-        
-        // Guardar archivo
-        Path targetLocation = comprobantesLocation.resolve(filename);
+
+        // Guardar archivo verificando límite de directorio
+        Path baseDir = comprobantesLocation.toAbsolutePath().normalize();
+        Path targetLocation = baseDir.resolve(filename).normalize();
+        if (!targetLocation.startsWith(baseDir)) {
+            throw new IOException("Ruta de destino inválida");
+        }
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        
+
         return filename;
+    }
+
+    private Path resolveSafePath(String filename, String carpeta) throws IOException {
+        if (filename == null || filename.isBlank() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            throw new IOException("Nombre de archivo inválido");
+        }
+        Path baseDir = rootLocation.resolve(carpeta).toAbsolutePath().normalize();
+        Path file = baseDir.resolve(filename).normalize();
+        if (!file.startsWith(baseDir)) {
+            throw new IOException("Intento de acceso fuera del directorio permitido");
+        }
+        return file;
     }
     
     /**
@@ -79,7 +98,7 @@ public class FileStorageService {
      */
     public Resource cargarArchivo(String filename, String carpeta) throws IOException {
         try {
-            Path file = rootLocation.resolve(carpeta).resolve(filename).normalize();
+            Path file = resolveSafePath(filename, carpeta);
             Resource resource = new UrlResource(file.toUri());
             
             if (resource.exists() && resource.isReadable()) {
@@ -99,7 +118,7 @@ public class FileStorageService {
      */
     public void eliminarArchivo(String filename, String carpeta) throws IOException {
         try {
-            Path file = rootLocation.resolve(carpeta).resolve(filename).normalize();
+            Path file = resolveSafePath(filename, carpeta);
             Files.deleteIfExists(file);
         } catch (IOException e) {
             throw new IOException("Error al eliminar el archivo: " + filename, e);

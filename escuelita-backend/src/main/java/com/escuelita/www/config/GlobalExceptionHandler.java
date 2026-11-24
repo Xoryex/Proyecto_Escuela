@@ -27,6 +27,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
     
+    // Maneja errores de validación / reglas de negocio (HTTP 400)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
+            IllegalArgumentException ex, WebRequest request) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "Solicitud inválida");
+        body.put("message", ex.getMessage());
+        body.put("mensaje", ex.getMessage());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     //Maneja otras excepciones no capturadas
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(

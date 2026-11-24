@@ -33,6 +33,15 @@ public class FileUploadController {
     private static final String UPLOAD_DIR = "uploads/logos/";
     private static final String UPLOAD_DOCS_DIR = "uploads/documentos/";
     private static final String UPLOAD_PERFILES_DIR = "uploads/perfiles/";
+
+    private String extractSafeExtension(String originalFilename, String allowedRegex) {
+        if (originalFilename == null || !originalFilename.contains(".")) {
+            return null;
+        }
+        String clean = Paths.get(originalFilename).getFileName().toString();
+        String ext = clean.substring(clean.lastIndexOf(".")).toLowerCase();
+        return ext.matches(allowedRegex) ? ext : null;
+    }
     
     // Endpoint para subir imágenes/archivos
 
@@ -64,15 +73,18 @@ public class FileUploadController {
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-            // Generar nombre único para el archivo
+            // Generar nombre único validando extensión de imagen
             String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String extension = extractSafeExtension(originalFilename, "^\\.(jpg|jpeg|png|webp|gif|svg)$");
+            if (extension == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Extensión de imagen no permitida"));
             }
             String uniqueFilename = UUID.randomUUID().toString() + extension;
-            // Guardar archivo
-            Path filePath = uploadPath.resolve(uniqueFilename);
+            Path baseDir = uploadPath.toAbsolutePath().normalize();
+            Path filePath = baseDir.resolve(uniqueFilename).normalize();
+            if (!filePath.startsWith(baseDir)) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Ruta de archivo inválida"));
+            }
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             // Construir URL del archivo
             String fileUrl = "/uploads/logos/" + uniqueFilename;
@@ -132,13 +144,17 @@ public class FileUploadController {
             }
 
             String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String extension = extractSafeExtension(originalFilename, "^\\.(jpg|jpeg|png|webp|gif|pdf|doc|docx)$");
+            if (extension == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Extensión de documento no permitida"));
             }
             String uniqueFilename = UUID.randomUUID().toString() + extension;
 
-            Path filePath = uploadPath.resolve(uniqueFilename);
+            Path baseDir = uploadPath.toAbsolutePath().normalize();
+            Path filePath = baseDir.resolve(uniqueFilename).normalize();
+            if (!filePath.startsWith(baseDir)) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Ruta de archivo inválida"));
+            }
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             String fileUrl = "/uploads/documentos/" + uniqueFilename;
@@ -191,13 +207,17 @@ public class FileUploadController {
             }
 
             String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String extension = extractSafeExtension(originalFilename, "^\\.(jpg|jpeg|png|webp|gif)$");
+            if (extension == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Extensión de imagen no permitida"));
             }
             String uniqueFilename = UUID.randomUUID().toString() + extension;
 
-            Path filePath = uploadPath.resolve(uniqueFilename);
+            Path baseDir = uploadPath.toAbsolutePath().normalize();
+            Path filePath = baseDir.resolve(uniqueFilename).normalize();
+            if (!filePath.startsWith(baseDir)) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Ruta de archivo inválida"));
+            }
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             String fileUrl = "/uploads/perfiles/" + uniqueFilename;

@@ -15,22 +15,21 @@ import { useModulosPermisos } from './useModulosPermisos';
  * const tieneAcceso = usePermisoModulo(7);
  */
 export const usePermisoModulo = (idModulo: number): boolean => {
-  // Obtener el usuario actual
   const usuarioActual = escuelaAuthService.getCurrentUser();
   const esAdministrador = usuarioActual?.rol?.nombreRol?.toUpperCase() === 'ADMINISTRADOR';
   const tieneSede = !!(usuarioActual && 'sede' in usuarioActual && usuarioActual.sede);
 
-  // Los administradores de IE tienen acceso a TODOS los módulos
-  if (esAdministrador && tieneSede) {
-    return true;
-  }
+  // Invocar hooks siempre en el mismo orden (cumple React Rules of Hooks)
+  const { tieneModulo } = useModulosPermisos(
+    esAdministrador && tieneSede ? null : (usuarioActual?.idUsuario || null)
+  );
 
-  // Para otros roles, verificar si el módulo está asignado
-  const { tieneModulo } = useModulosPermisos(usuarioActual?.idUsuario || null);
-  
   const tieneAcceso = useMemo(() => {
+    if (esAdministrador && tieneSede) {
+      return true;
+    }
     return tieneModulo(idModulo);
-  }, [idModulo]);
+  }, [esAdministrador, tieneSede, tieneModulo, idModulo]);
 
   return tieneAcceso;
 };

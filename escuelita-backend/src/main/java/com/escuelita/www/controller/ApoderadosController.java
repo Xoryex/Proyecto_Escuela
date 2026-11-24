@@ -92,6 +92,7 @@ public class ApoderadosController {
         return ResponseEntity.ok(serviceApoderados.modificar(apoderados));
     }
     @GetMapping("/apoderados/{id}")
+    @RequireModulo(5)  // 5 = Módulo ALUMNOS
     public Optional<Apoderados> buscarId(@PathVariable("id") Long id){
         return serviceApoderados.buscarId(id);
     }

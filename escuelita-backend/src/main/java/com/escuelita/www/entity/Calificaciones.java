@@ -4,6 +4,8 @@ package com.escuelita.www.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -43,10 +45,12 @@ public class Calificaciones {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_evaluacion")
+    @NotFound(action = NotFoundAction.IGNORE)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Evaluaciones idEvaluacion;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_matricula")
+    @NotFound(action = NotFoundAction.IGNORE)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Matriculas idMatricula;
 

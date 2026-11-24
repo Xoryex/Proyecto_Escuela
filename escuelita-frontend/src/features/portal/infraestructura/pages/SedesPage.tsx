@@ -2,15 +2,11 @@ import { Building2, Edit, MapPin, Plus, Star, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast, Toaster } from 'sonner';
 import Pagination from '../../../../components/common/Pagination';
-import { escuelaAuthService } from '../../../../services/escuelaAuth.service';
 import SedeForm from '../components/SedeForm';
 import { useSedes } from '../hooks/useInfraestructura';
 import type { Sede } from '../types';
 
 const SedesPage: React.FC = () => {
-    const sedeId = escuelaAuthService.getSedeId();
-    const currentUser = escuelaAuthService.getCurrentUser();
-
     const { registros: sedes, cargando, obtenerTodos: obtenerSedes, crear, actualizar, eliminar } = useSedes();
 
     const [showModal, setShowModal] = useState(false);

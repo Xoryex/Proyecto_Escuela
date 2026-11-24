@@ -72,6 +72,7 @@ public class AulasController {
         return ResponseEntity.ok(serviceAulas.modificar(aulas));
     }
     @GetMapping("/aulas/{id}")
+    @RequireModulo(3)  // 3 = Módulo INFRAESTRUCTURA
     public Optional<Aulas> buscarId(@PathVariable("id") Long id){
         return serviceAulas.buscarId(id);
     }

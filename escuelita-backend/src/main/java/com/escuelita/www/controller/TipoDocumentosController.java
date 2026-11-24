@@ -25,7 +25,6 @@ public class TipoDocumentosController {
     private ITipoDocumentosService serviceTipoDocumentos;
 
     @GetMapping("/tipodocumentos")
-    @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public List<TipoDocumentos> buscarTodos() {
         return serviceTipoDocumentos.buscarTodos(); 
     }
@@ -42,7 +41,6 @@ public class TipoDocumentosController {
         return tipoDocumentos;
     }
     @GetMapping("/tipodocumentos/{id}")
-    @RequireModulo(2)  // 2 = Módulo CONFIGURACIÓN
     public Optional<TipoDocumentos> buscarId(@PathVariable("id") Long id){
         return serviceTipoDocumentos.buscarId(id);
     }

@@ -28,41 +28,10 @@ public class ModuloAccesoAspect {
      * @return ID del usuario o null si no está disponible
      */
     private Long obtenerIdUsuarioDelToken() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated()) {
-                Object principal = auth.getPrincipal();
-
-                // Si es un CustomUserDetails o similar, intenta extraer el ID
-                if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-                    // En este caso, el nombre de usuario sería la cadena
-                    // pero necesitamos el ID numérico del JWT
-                }
-
-                // Intenta obtener del nombre de usuario o del header como fallback
-                String nombre = auth.getName();
-                if (nombre != null && !nombre.isEmpty()) {
-                    try {
-                        return Long.parseLong(nombre);
-                    } catch (NumberFormatException e) {
-                        // No es un número, continuar
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("⚠️  Error al extraer usuario del contexto: " + e.getMessage());
+        // Fuente de verdad única: TenantContext poblado por JwtFilter tras verificar firma JWT
+        if (TenantContext.hasUserId()) {
+            return TenantContext.getUserId();
         }
-
-        // Fallback: intenta obtener del header como fallback
-        String idUsuarioStr = request.getHeader("X-Usuario-ID");
-        if (idUsuarioStr != null && !idUsuarioStr.isEmpty()) {
-            try {
-                return Long.parseLong(idUsuarioStr);
-            } catch (NumberFormatException e) {
-                // No es un número
-            }
-        }
-
         return null;
     }
 
@@ -81,45 +50,23 @@ public class ModuloAccesoAspect {
 
         // ✅ SUPER ADMINS: Acceso completo sin validación
         if (TenantContext.isSuperAdmin()) {
-            System.out.println(
-                    "👑 Super Admin detectado - Acceso permitido a " + nombreMetodo + " (módulo " + idModulo + ")");
             return joinPoint.proceed();
         }
 
-        // 🔒 USUARIOS DE ESCUELA: Intentar validar permisos de módulo
-        System.out.println("\n🛡️  Interceptado: " + nombreMetodo + " (requiere módulo " + idModulo + ")");
-
-        // Obtener ID del usuario
+        // 🔒 USUARIOS DE ESCUELA: Validar permisos de módulo obligatoriamente
         Long idUsuario = obtenerIdUsuarioDelToken();
 
-        // Si no se puede obtener el ID del usuario pero está autenticado, permitir por
-        // ahora
-        // (La seguridad es validada por Spring Security y TenantContext ya está
-        // establecido)
         if (idUsuario == null) {
-            // Verificar que al menos hay autenticación
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated() && TenantContext.hasSedeId()) {
-                System.out.println(
-                        "⚠️  No se pudo extraer ID de usuario, pero hay sesión autenticada. Permitiendo acceso.");
-                return joinPoint.proceed();
-            }
-
-            System.err.println("❌ No se pudo obtener ID del usuario y no hay sesión autenticada");
-            throw new SecurityException("Usuario no autenticado");
+            System.err.println("❌ Acceso denegado en " + nombreMetodo + ": no existe ID de usuario verificado en JWT");
+            throw new SecurityException("Usuario no autenticado o sesión inválida");
         }
 
         try {
-            // ✅ Validar acceso al módulo
             if (!serviceAcceso.tieneAccesoModulo(idUsuario, idModulo)) {
                 System.err.println("🚫 Usuario " + idUsuario + " NO tiene acceso a módulo " + idModulo);
                 throw new SecurityException("No tienes acceso al módulo solicitado");
             }
-
-            // ✅ Usuario tiene acceso, permitir ejecución del método
-            System.out.println("✅ Acceso permitido para usuario " + idUsuario + " al módulo " + idModulo);
             return joinPoint.proceed();
-
         } catch (SecurityException e) {
             throw e;
         } catch (Exception e) {

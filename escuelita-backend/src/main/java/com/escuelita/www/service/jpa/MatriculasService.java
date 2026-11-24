@@ -1,5 +1,6 @@
 package com.escuelita.www.service.jpa;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,8 +14,6 @@ import com.escuelita.www.service.IMatriculasService;
 import com.escuelita.www.util.TenantContext;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.StoredProcedureQuery;
 
 @Service
 public class MatriculasService implements IMatriculasService{
@@ -47,8 +46,20 @@ public class MatriculasService implements IMatriculasService{
             }
         }
         
+        // Validar que no exista matrícula duplicada para el mismo alumno y año escolar
+        if (matriculas.getIdAlumno() != null && matriculas.getIdAnio() != null) {
+            Long duplicadas = ((Number) entityManager.createNativeQuery(
+                "SELECT COUNT(*) FROM matriculas WHERE id_alumno = :idAlumno AND id_anio = :idAnio AND estado = 1 AND estado_matricula <> 'Cancelada'")
+                .setParameter("idAlumno", matriculas.getIdAlumno().getIdAlumno())
+                .setParameter("idAnio", matriculas.getIdAnio().getIdAnioEscolar())
+                .getSingleResult()).longValue();
+            if (duplicadas > 0) {
+                throw new IllegalArgumentException("El alumno ya cuenta con una matrícula activa en este año escolar.");
+            }
+        }
+
         // Validar capacidad ANTES de crear la matrícula (solo para alumnos sin vacante garantizada)
-        if (matriculas.getVacanteGarantizada() != null && !matriculas.getVacanteGarantizada()) {
+        if (!Boolean.TRUE.equals(matriculas.getVacanteGarantizada())) {
             Long idSeccion = matriculas.getIdSeccion() != null ? matriculas.getIdSeccion().getIdSeccion() : null;
             Long idAnio = matriculas.getIdAnio() != null ? matriculas.getIdAnio().getIdAnioEscolar() : null;
             
@@ -56,7 +67,7 @@ public class MatriculasService implements IMatriculasService{
                 int vacantesDisponibles = consultarVacantesDisponibles(idSeccion, idAnio);
                 
                 if (vacantesDisponibles <= 0) {
-                    throw new RuntimeException("No hay vacantes disponibles en esta sección. No se puede crear la matrícula.");
+                    throw new IllegalArgumentException("No hay vacantes disponibles en esta sección. No se puede crear la matrícula.");
                 }
             }
         }
@@ -145,45 +156,55 @@ public class MatriculasService implements IMatriculasService{
     @Override
     @Transactional
     public String confirmarPagoMatricula(Long idMatricula) {
-        try {
-            StoredProcedureQuery query = entityManager.createStoredProcedureQuery("sp_confirmar_pago_matricula");
-            
-            query.registerStoredProcedureParameter("p_id_matricula", Long.class, ParameterMode.IN);
-            query.registerStoredProcedureParameter("p_resultado", String.class, ParameterMode.OUT);
-            query.registerStoredProcedureParameter("p_mensaje", String.class, ParameterMode.OUT);
-            
-            query.setParameter("p_id_matricula", idMatricula);
-            
-            query.execute();
-            
-            String resultado = (String) query.getOutputParameterValue("p_resultado");
-            String mensaje = (String) query.getOutputParameterValue("p_mensaje");
-            
-            // Si no hay vacantes, lanzar excepción para que el frontend maneje el error
-            if ("SIN_VACANTE".equals(resultado) || "ERROR".equals(resultado)) {
-                throw new RuntimeException(mensaje);
+        Matriculas matricula = repoMatriculas.findById(idMatricula)
+            .orElseThrow(() -> new IllegalArgumentException("Matrícula no encontrada"));
+
+        if (!TenantContext.isSuperAdmin()) {
+            Long sedeId = matricula.getIdSeccion() != null && matricula.getIdSeccion().getIdSede() != null
+                ? matricula.getIdSeccion().getIdSede().getIdSede()
+                : null;
+            if (sedeId == null || !sedeId.equals(TenantContext.getSedeId())) {
+                throw new SecurityException("No tienes permiso para confirmar matrículas de otra sede");
             }
-            
-            return mensaje;
-        } catch (Exception e) {
-            throw new RuntimeException("Error al confirmar pago: " + e.getMessage());
         }
+
+        if ("Activa".equalsIgnoreCase(matricula.getEstadoMatricula())) {
+            return "La matrícula ya se encuentra activa y pagada";
+        }
+
+        if (!Boolean.TRUE.equals(matricula.getVacanteGarantizada())
+                && matricula.getIdSeccion() != null && matricula.getIdAnio() != null) {
+            int vacantesDisponibles = consultarVacantesDisponibles(
+                matricula.getIdSeccion().getIdSeccion(),
+                matricula.getIdAnio().getIdAnioEscolar()
+            );
+            if (vacantesDisponibles <= 0) {
+                throw new IllegalArgumentException("No hay vacantes disponibles en la sección para confirmar esta matrícula");
+            }
+        }
+
+        matricula.setEstadoMatricula("Activa");
+        matricula.setFechaPagoMatricula(LocalDateTime.now());
+        matricula.setVacanteGarantizada(true);
+        repoMatriculas.save(matricula);
+        return "Pago de matrícula confirmado exitosamente";
     }
     
     @Override
     public int consultarVacantesDisponibles(Long idSeccion, Long idAnio) {
         try {
-            // Obtener capacidad máxima de la sección usando native query
-            Integer capacidadMaxima = (Integer) entityManager.createNativeQuery(
-                "SELECT capacidad_maxima FROM secciones WHERE id_seccion = :idSeccion")
+            // Obtener vacantes (capacidad) de la sección usando la columna real 'vacantes'
+            List<?> res = entityManager.createNativeQuery(
+                "SELECT vacantes FROM secciones WHERE id_seccion = :idSeccion AND estado = 1")
                 .setParameter("idSeccion", idSeccion)
-                .getSingleResult();
-            
-            if (capacidadMaxima == null) {
-                throw new RuntimeException("Sección no encontrada");
+                .getResultList();
+
+            if (res.isEmpty() || res.get(0) == null) {
+                throw new IllegalArgumentException("Sección no encontrada o sin cupo configurado");
             }
+            int capacidadMaxima = ((Number) res.get(0)).intValue();
             
-            // Contar matrículas activas en esa sección usando native query
+            // Contar matrículas activas en esa sección para ese año escolar
             Long matriculasActivas = ((Number) entityManager.createNativeQuery(
                 "SELECT COUNT(*) FROM matriculas WHERE id_seccion = :idSeccion " +
                 "AND id_anio = :idAnio " +
@@ -193,10 +214,11 @@ public class MatriculasService implements IMatriculasService{
                 .setParameter("idAnio", idAnio)
                 .getSingleResult()).longValue();
             
-            // Calcular vacantes disponibles
             int vacantesDisponibles = capacidadMaxima - matriculasActivas.intValue();
-            return Math.max(0, vacantesDisponibles); // No devolver negativos
+            return Math.max(0, vacantesDisponibles);
             
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al consultar vacantes: " + e.getMessage());
         }

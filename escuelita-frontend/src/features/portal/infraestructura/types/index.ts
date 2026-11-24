@@ -59,6 +59,8 @@ export interface Sede {
     ugel?: string;
     telefono?: string;
     correoInstitucional?: string;
+    codigoEstablecimiento?: string;
+    esSedePrincipal?: boolean;
     idInstitucion: Institucion; // Objeto completo
     estado?: number;
 }
@@ -73,6 +75,8 @@ export interface SedeDTO {
     ugel?: string;
     telefono?: string;
     correoInstitucional?: string;
+    codigoEstablecimiento?: string;
+    esSedePrincipal?: boolean;
     idInstitucion: number; // Solo el ID para enviar al backend
 }
 

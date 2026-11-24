@@ -137,7 +137,7 @@ INSERT INTO `sedes` (`id_sede`, `id_institucion`, `nombre_sede`, `direccion`, `d
 
 -- super_admins
 INSERT INTO `super_admins` (`id_admin`, `nombres`, `apellidos`, `correo`, `usuario`, `password`, `rol_plataforma`, `estado`, `foto_url`) VALUES
-(1, 'superadmin', 'administrador', 'superadmin@gmail.co,', 'superadmin', '$2a$10$Yd7y60O2ZOxCPmVEowmyZOvUubHoyMYqSnDqhhcMsJBsIwBsypa8i', 'SUPER_ADMIN', 1, '/uploads/perfiles/f932e7ee-086e-4005-88d3-8d612c8458e7.jpeg');
+(1, 'superadmin', 'administrador', 'superadmin@gmail.com', 'superadmin', '$2a$10$Yd7y60O2ZOxCPmVEowmyZOvUubHoyMYqSnDqhhcMsJBsIwBsypa8i', 'SUPER_ADMIN', 1, '/uploads/perfiles/f932e7ee-086e-4005-88d3-8d612c8458e7.jpeg');
 
 -- aulas
 INSERT INTO `aulas` (`id_aula`, `id_sede`, `nombre_aula`, `capacidad`, `estado`) VALUES

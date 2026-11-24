@@ -36,15 +36,13 @@ public class SecurityConfig {
             http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/restful/token"
-                        , "/restful/registros"
-                        , "/auth/admin/**"  // Autenticación Super Admin
-                        , "/auth/escuela/**"  // Autenticación Escuela
-                        , "/utils/**"
-                        , "/uploads/**").permitAll()  // Permitir acceso a archivos subidos
-                    // Permitir endpoints GET de lectura (dropdowns)
-                    .requestMatchers(HttpMethod.GET, "/restful/metodospago", "/restful/deudasalumno", "/restful/conceptospago", "/restful/instituciones", "/restful/grados", "/restful/matriculas", "/restful/alumnos").permitAll()
-                    .anyRequest().authenticated()     // Resto de endpoints requieren autenticación
+                        , "/auth/admin/login"   // Login Super Admin
+                        , "/auth/escuela/login" // Login Escuela
+                        , "/auth/escuela/verify"// Verificación de sesión Escuela
+                        , "/uploads/**").permitAll()  // Archivos estáticos subidos (logos/avatares)
+                    .anyRequest().authenticated()     // Todos los demás endpoints (incl. /auth/admin/register, /utils/**, /restful/**) requieren JWT
                 )
                 .addFilterBefore(jwtFilter, 
                     UsernamePasswordAuthenticationFilter.class);

@@ -77,6 +77,7 @@ public class GradosController {
         }
     }
     @GetMapping("/grados/{id}")
+    @RequireModulo(3)  // 3 = Módulo INFRAESTRUCTURA
     public Optional<Grados> buscarId(@PathVariable("id") Long id){
         return serviceGrados.buscarId(id);
     }

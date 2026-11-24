@@ -86,6 +86,7 @@ public class HorariosController {
         return ResponseEntity.ok(serviceHorarios.modificar(horarios));
     }
     @GetMapping("/horarios/{id}")
+    @RequireModulo(4)  // 4 = Módulo GESTIÓN ACADÉMICA
     public Optional<Horarios> buscarId(@PathVariable("id") Long id) {
         return serviceHorarios.buscarId(id);
     }

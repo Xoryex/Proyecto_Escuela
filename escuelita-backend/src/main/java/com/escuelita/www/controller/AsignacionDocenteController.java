@@ -104,6 +104,7 @@ public class AsignacionDocenteController {
         return ResponseEntity.ok(serviceAsignacionDocente.modificar(asignacionDocente));
     }
     @GetMapping("/asignaciondocente/{id}")
+    @RequireModulo(4)  // 4 = Módulo GESTIÓN ACADÉMICA
     public Optional<AsignacionDocente> buscarId(@PathVariable("id") Long id) {
         return serviceAsignacionDocente.buscarId(id);
     }
